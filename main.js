@@ -2,6 +2,8 @@ var objects = [];
 var engine;
 var usePhysics = false;
 var lastTime = 0;
+var zeroVelocity = false;
+var startHeight = 55;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -20,9 +22,28 @@ function animate(timeRan) {
     //Clear Objects
     objects = [];
     for (i = 0; i < bodies.length; i++) {
+      var center = Matter.Vertices.centre(bodies[i].vertices);
+      var deltaY = center.y - startHeight; // change in height
+      var deltaTime = timeRan - lastTime; // chnage in time
+      deltaTime = deltaTime / 1000; // milliseconds to seconds
+      deltaY = deltaY / 100; // pixels to meters (100px = 1m)
+      var acceleration = deltaY / (0.5 * Math.pow(deltaTime, 2)); // Acceleration of block
+      console.log({
+        acceleration: acceleration,
+        velocity: acceleration * deltaTime, //velocity I calculated
+        actualVelocity: (bodies[i].velocity.y * 10) / 16.7 //velocity that the engine is telling it is ()
+      });
+      if (zeroVelocity) {
+        Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
+        lastTime = timeRan;
+        startHeight = Matter.Vertices.centre(bodies[i].vertices).y;
+      }
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
       objects.push(createObject(bodies[i].vertices));
     }
+    zeroVelocity = false;
+  } else {
+    lastTime = timeRan;
   }
   //Run the Animate Function again to make it recursive
   requestAnimationFrame(animate);
@@ -113,12 +134,17 @@ function createVertex(x, y) {
 function runSim() {
   //Create a new Physics Engine
   var e = Matter.Engine.create();
+  e.world.gravity.y = 0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
     var obj = Matter.Body.create({
       position: Matter.Vertices.centre(objects[i].vertices),
-      vertices: objects[i].vertices
+      vertices: objects[i].vertices,
+      frictionAir: 0,
+      velocity: { x: 0, y: 0 }
     });
+    Matter.Body.setVelocity(obj, createVertex(0, 0));
+    Matter.Body.setMass(obj, 1);
     console.log(obj.position);
     //Add these bodies to the world
     Matter.World.add(e.world, [obj]);
@@ -128,13 +154,17 @@ function runSim() {
   usePhysics = true;
 
   //Create a Renderer. The Canvas is the main renderer this renderer is being used for debugging purposes and will be removed before final release
-  var render = Matter.Render.create({
-    element: document.getElementById("matter-window"),
-    engine: engine
-  });
+  // var render = Matter.Render.create({
+  //   element: document.getElementById("matter-window"),
+  //   engine: engine
+  // });
   //Run the Engine and the Renderer
-  Matter.Render.run(render);
+  // Matter.Render.run(render);
   Matter.Engine.run(engine);
+  var bodies = Matter.Composite.allBodies(engine.world);
+  for (i = 0; i < bodies.length; i++) {
+    Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
+  }
 }
 
 //Start Drag
