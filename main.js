@@ -98,6 +98,17 @@ function createRect(x, y, w, h) {
   return createObject(vertices);
 }
 
+function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4){//UP TO 4 SIDES
+	var polygon = {};
+  	polygon.vertices = [
+    createVertex(x1, y1),
+    createVertex(x3, y3),
+	createVertex(x4, y4),
+    createVertex(x2, y2)
+  ];
+  return polygon;
+}
+
 /*
   Creates A JS Object from the verticies. This object will
   be used in order for the canvas to render the object and
@@ -137,17 +148,38 @@ function runSim() {
   e.world.gravity.y = 0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    var obj = Matter.Body.create({
-      position: Matter.Vertices.centre(objects[i].vertices),
-      vertices: objects[i].vertices,
-      frictionAir: 0,
-      velocity: { x: 0, y: 0 }
-    });
-    Matter.Body.setVelocity(obj, createVertex(0, 0));
-    Matter.Body.setMass(obj, 1);
-    console.log(obj.position);
-    //Add these bodies to the world
-    Matter.World.add(e.world, [obj]);
+	  if (i <= 1){//makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
+		  var obj = Matter.Body.create({
+		  position: Matter.Vertices.centre(objects[i].vertices),
+		  vertices: objects[i].vertices,
+		  frictionAir: 0,
+			isStatic: true,
+		  velocity: { x: 0, y: 0 }
+		});
+//		Matter.Body.setVelocity(obj, createVertex(0, 0));
+//		Matter.Body.setMass(obj, 1);
+		  Matter.Body.applyForce(obj, {x: obj.position.x, y: obj.position.y}, {x: 0, y: 0});//control amount of force applied 
+		console.log(obj.position);
+		//Add these bodies to the world
+		Matter.World.add(e.world, [obj]);
+	  }
+	  else {
+		  var obj = Matter.Body.create({
+		  position: Matter.Vertices.centre(objects[i].vertices),
+		  vertices: objects[i].vertices,
+		  frictionAir: 0,
+			  isStatic: false,
+		  velocity: { x: 0, y: 0 }
+		});
+//		Matter.Body.setVelocity(obj, createVertex(0, 0));
+//		Matter.Body.setMass(obj, 1);
+	  	Matter.Body.applyForce(obj, {x: obj.position.x, y: obj.position.y}, {x: 0, y: 0});//control amount of force applied 
+		  
+		console.log(obj.position);
+		//Add these bodies to the world
+		Matter.World.add(e.world, [obj]);
+	  }
+    
   }
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
