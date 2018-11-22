@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Triangle Builder</title>
+    <script src="triangle.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="triangle.css" type="text/css" />
+  </head>
+  <body onload="onValueChanged()">
+    <canvas id="window" width="1000" height="800"></canvas>
+    <input
+      type="text"
+      id="angleA"
+      placeholder="Angle A"
+      value="45"
+      oninput="onValueChanged()"
+    />
+    <input
+      type="text"
+      id="angleB"
+      placeholder="Angle B"
+      value="45"
+      oninput="onValueChanged()"
+    />
+    <input
+      type="text"
+      id="angleC"
+      placeholder="Angle C"
+      value="90"
+      oninput="onValueChanged()"
+    />
+    <input
+      type="text"
+      id="sideA"
+      placeholder="Side A"
+      value="1"
+      oninput="onValueChanged()"
+    />
+    <input
+      type="text"
+      id="sideB"
+      placeholder="Side B"
+      value="1"
+      oninput="onValueChanged()"
+    />
+    <input
+      type="text"
+      id="sideC"
+      placeholder="Side C"
+      value="1.41421356237"
+      oninput="onValueChanged()"
+    />
+    <p id="valid-disp">Valid</p>
+  </body>
+</html>

@@ -15,6 +15,9 @@ function animate(timeRan) {
   //Draw all objects from their vertices onto the canvas
   drawObjects(ctx);
 
+  var deltaTime = timeRan - lastTime;
+  lastTime = timeRan;
+
   //This will be true once run is pressed
   if (usePhysics) {
     //Get all bodies from the Matter World
@@ -22,29 +25,24 @@ function animate(timeRan) {
     //Clear Objects
     objects = [];
     for (i = 0; i < bodies.length; i++) {
-      var center = Matter.Vertices.centre(bodies[i].vertices);
-      var deltaY = center.y - startHeight; // change in height
-      var deltaTime = timeRan - lastTime; // chnage in time
-      deltaTime = deltaTime / 1000; // milliseconds to seconds
-      deltaY = deltaY / 100; // pixels to meters (100px = 1m)
-      var acceleration = deltaY / (0.5 * Math.pow(deltaTime, 2)); // Acceleration of block
-      console.log({
-        acceleration: acceleration,
-        velocity: acceleration * deltaTime, //velocity I calculated
-        actualVelocity: (bodies[i].velocity.y * 10) / 16.7 //velocity that the engine is telling it is ()
-      });
-      if (zeroVelocity) {
-        Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
-        lastTime = timeRan;
-        startHeight = Matter.Vertices.centre(bodies[i].vertices).y;
-      }
+      // Matter.Body.applyForce(
+      //   bodies[i],
+      //   Matter.Vertices.centre(bodies[i].vertices),
+      //   createVertex(0, 0.0098)
+      // );
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
+      bodies[i].force = createVertex(0, 0.00098 * bodies[i].mass);
+      console.log({
+        V: (bodies[i].velocity.y * 10) / 16.7,
+        t: timeRan,
+        y: Matter.Vertices.centre(bodies[i].vertices).y
+      });
       objects.push(createObject(bodies[i].vertices));
     }
-    zeroVelocity = false;
-  } else {
-    lastTime = timeRan;
+    //Make Engine Move Foward By Delta Time
+    Matter.Engine.update(engine, deltaTime);
   }
+
   //Run the Animate Function again to make it recursive
   requestAnimationFrame(animate);
 }
@@ -98,12 +96,13 @@ function createRect(x, y, w, h) {
   return createObject(vertices);
 }
 
-function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4){//UP TO 4 SIDES
-	var polygon = {};
-  	polygon.vertices = [
+function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
+  //UP TO 4 SIDES
+  var polygon = {};
+  polygon.vertices = [
     createVertex(x1, y1),
     createVertex(x3, y3),
-	createVertex(x4, y4),
+    createVertex(x4, y4),
     createVertex(x2, y2)
   ];
   return polygon;
@@ -145,41 +144,51 @@ function createVertex(x, y) {
 function runSim() {
   //Create a new Physics Engine
   var e = Matter.Engine.create();
-  e.world.gravity.y = 0.98;
+  e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-	  if (i <= 1){//makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
-		  var obj = Matter.Body.create({
-		  position: Matter.Vertices.centre(objects[i].vertices),
-		  vertices: objects[i].vertices,
-		  frictionAir: 0,
-			isStatic: true,
-		  velocity: { x: 0, y: 0 }
-		});
-//		Matter.Body.setVelocity(obj, createVertex(0, 0));
-//		Matter.Body.setMass(obj, 1);
-		  Matter.Body.applyForce(obj, {x: obj.position.x, y: obj.position.y}, {x: 0, y: 0});//control amount of force applied 
-		console.log(obj.position);
-		//Add these bodies to the world
-		Matter.World.add(e.world, [obj]);
-	  }
-	  else {
-		  var obj = Matter.Body.create({
-		  position: Matter.Vertices.centre(objects[i].vertices),
-		  vertices: objects[i].vertices,
-		  frictionAir: 0,
-			  isStatic: false,
-		  velocity: { x: 0, y: 0 }
-		});
-//		Matter.Body.setVelocity(obj, createVertex(0, 0));
-//		Matter.Body.setMass(obj, 1);
-	  	Matter.Body.applyForce(obj, {x: obj.position.x, y: obj.position.y}, {x: 0, y: 0});//control amount of force applied 
-		  
-		console.log(obj.position);
-		//Add these bodies to the world
-		Matter.World.add(e.world, [obj]);
-	  }
-    
+    if (i < 0) {
+      //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
+      var obj = Matter.Body.create({
+        position: Matter.Vertices.centre(objects[i].vertices),
+        vertices: objects[i].vertices,
+        frictionAir: 0,
+        isStatic: true,
+        velocity: { x: 0, y: 0 }
+      });
+      //		Matter.Body.setVelocity(obj, createVertex(0, 0));
+      //		Matter.Body.setMass(obj, 1);
+      Matter.Body.applyForce(
+        obj,
+        { x: obj.position.x, y: obj.position.y },
+        { x: 0, y: 0 }
+      ); //control amount of force applied
+      console.log(obj.position);
+      //Add these bodies to the world
+      Matter.World.add(e.world, [obj]);
+    } else {
+      var obj = Matter.Body.create({
+        position: Matter.Vertices.centre(objects[i].vertices),
+        vertices: objects[i].vertices,
+        frictionAir: 0,
+        mass: 1,
+        friction: 0,
+        isStatic: false,
+        velocity: { x: 0, y: 0 }
+      });
+      Matter.Body.setMass(obj, 2);
+      //		Matter.Body.setVelocity(obj, createVertex(0, 0));
+      //		Matter.Body.setMass(obj, 1);
+      // Matter.Body.applyForce(
+      //   obj,
+      //   { x: obj.position.x, y: obj.position.y },
+      //   { x: 0, y: 0.098 }
+      // ); //control amount of force applied
+
+      console.log(obj.position);
+      //Add these bodies to the world
+      Matter.World.add(e.world, [obj]);
+    }
   }
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
@@ -192,7 +201,7 @@ function runSim() {
   // });
   //Run the Engine and the Renderer
   // Matter.Render.run(render);
-  Matter.Engine.run(engine);
+  // Matter.Engine.run(engine);
   var bodies = Matter.Composite.allBodies(engine.world);
   for (i = 0; i < bodies.length; i++) {
     Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
