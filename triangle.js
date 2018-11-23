@@ -2,9 +2,23 @@ var angles;
 var sides;
 
 function drawTriangle() {
-  var ctx = document.getElementById("window").getContext("2d");
-  ctx.clearRect(0, 0, 1000, 800);
+  var canvas = document.getElementById("window");
+  var ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  var vertices = createVertices();
+
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+  for (i = 1; i < vertices.length; i++) {
+    ctx.lineTo(vertices[i].x, vertices[i].y);
+  }
+  ctx.lineTo(vertices[0].x, vertices[0].y);
+  ctx.stroke();
+}
+
+function createVertices() {
+  var canvas = document.getElementById("window");
   var vertex0 = { x: 100, y: 600 };
 
   var vertex1 = {
@@ -22,20 +36,14 @@ function drawTriangle() {
     y: (vertices[0].y + vertices[1].y + vertices[2].y) / 3
   };
   var translation = {
-    x: 500 - midPoint.x,
-    y: 400 - midPoint.y
+    x: canvas.width / 2 - midPoint.x,
+    y: canvas.height / 2 - midPoint.y
   };
   for (i = 0; i < vertices.length; i++) {
     vertices[i].x += translation.x;
     vertices[i].y += translation.y;
   }
-  ctx.beginPath();
-  ctx.moveTo(vertices[0].x, vertices[0].y);
-  for (i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i].x, vertices[i].y);
-  }
-  ctx.lineTo(vertices[0].x, vertices[0].y);
-  ctx.stroke();
+  return vertices;
 }
 
 function toRads(angle) {
@@ -83,4 +91,8 @@ function onValueChanged() {
   } else {
     document.getElementById("valid-disp").innerHTML = "Invalid";
   }
+}
+
+function submit() {
+  window.parent.postMessage(createVertices(), "*");
 }

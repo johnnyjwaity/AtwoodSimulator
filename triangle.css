@@ -1,6 +1,24 @@
+body {
+  display: inline-block;
+  align-content: center;
+  background-color: white;
+}
 #window {
   border: 2px;
   border-color: black;
   border-style: solid;
   border-radius: 25px;
+  float: left;
+}
+#input {
+  display: block;
+  width: 50px;
+  float: left;
+  margin-top: 50px;
+  align-content: center;
+}
+.vertical {
+  float: left;
+  width: 50 px;
+  margin-top: 15px;
 }

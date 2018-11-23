@@ -277,3 +277,12 @@ function translatePointOnCanvas(vertex) {
 }
 
 //End Drag
+
+window.addEventListener(
+  "message",
+  function(e) {
+    var obj = createObject(e.data);
+    objects.push(obj);
+  },
+  false
+);
