@@ -6,58 +6,64 @@
     <link rel="stylesheet" href="triangle.css" type="text/css" />
   </head>
   <body onload="onValueChanged()">
-    <canvas id="window" width="500" height="400"></canvas>
-    <section id="input">
-      <input
-        type="text"
-        id="angleA"
-        placeholder="Angle A"
-        value="45"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <input
-        type="text"
-        id="angleB"
-        placeholder="Angle B"
-        value="45"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <input
-        type="text"
-        id="angleC"
-        placeholder="Angle C"
-        value="90"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <input
-        type="text"
-        id="sideA"
-        placeholder="Side A"
-        value="1"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <input
-        type="text"
-        id="sideB"
-        placeholder="Side B"
-        value="1"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <input
-        type="text"
-        id="sideC"
-        placeholder="Side C"
-        value="1.41421356237"
-        oninput="onValueChanged()"
-        class="vertical"
-      />
-      <p id="valid-disp" class="vertical">Valid</p>
-      <button type="button" onclick="submit()">Done</button>
+    <section id="input-container">
+      <canvas id="window" width="500" height="400"></canvas>
+      <section id="input">
+        <input
+          type="text"
+          id="angleA"
+          placeholder="Angle A"
+          value="45"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <input
+          type="text"
+          id="angleB"
+          placeholder="Angle B"
+          value="45"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <input
+          type="text"
+          id="angleC"
+          placeholder="Angle C"
+          value="90"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <input
+          type="text"
+          id="sideA"
+          placeholder="Side A"
+          value="1"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <input
+          type="text"
+          id="sideB"
+          placeholder="Side B"
+          value="1"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <input
+          type="text"
+          id="sideC"
+          placeholder="Side C"
+          value="1.41421356237"
+          oninput="onValueChanged()"
+          class="vertical"
+        />
+        <p id="valid-disp" class="vertical">Valid</p>
+      </section>
     </section>
+    <section style="width: 100%; height: 70px; display: flex; align-content: center;">
+      <button type="button" onclick="submit()" class="lrgButton">Done</button>
+      <button type="button" onclick="submit()" class="lrgButton">Done</button>
+    </section>
+    
   </body>
 </html>

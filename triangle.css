@@ -1,7 +1,10 @@
 body {
-  display: inline-block;
-  align-content: center;
-  background-color: white;
+  /* display: inline-block; */
+  background-color: #3AAFA9;
+}
+#input-container{
+  width: 100%;
+  height: 400px;
 }
 #window {
   border: 2px;
@@ -21,4 +24,13 @@ body {
   float: left;
   width: 50 px;
   margin-top: 15px;
+}
+.lrgButton{
+  float: left;
+  width: 50%;
+  height: 100%;
+  background-color: transparent;
+  border-style: none;
+  color: #17252A;
+  font-size: 40px;
 }
