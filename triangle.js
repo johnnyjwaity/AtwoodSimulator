@@ -95,4 +95,8 @@ function onValueChanged() {
 
 function submit() {
   window.parent.postMessage(createVertices(), "*");
+  close();
+}
+function close() {
+  window.parent.postMessage("close", "*");
 }

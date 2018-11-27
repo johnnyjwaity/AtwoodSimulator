@@ -15,19 +15,11 @@
     <button onclick="objects.push(createRect(0, 750, 1000, 50))">
       Create Floor
     </button>
-    <button
-      onclick="objects.push(createPolygon(150,150,600,500,300,750,750,750))"
-    >
-      Create Ramp
-    </button>
-    <button
-      onclick="objects.push(createPolygon(200,150,250,200,250,300,307,357))"
-    >
-      Create Box On Ramp
-    </button>
+    <button onclick="openTriangleBuilder()">Create Ramp</button>
     <button onclick="runSim()">Run</button>
-    <button onclick="zeroVelocity = true">Zero</button>
-    <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
+    <!--
+      <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
+    -->
     <script type="text/javascript" src="main.js"></script>
   </body>
 </html>

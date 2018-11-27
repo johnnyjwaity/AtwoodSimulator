@@ -2,7 +2,6 @@ var objects = [];
 var engine;
 var usePhysics = false;
 var lastTime = 0;
-var zeroVelocity = false;
 var startHeight = 55;
 
 function animate(timeRan) {
@@ -31,7 +30,12 @@ function animate(timeRan) {
       //   createVertex(0, 0.0098)
       // );
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
-      bodies[i].force = createVertex(0, 0.00098 * bodies[i].mass);
+      Matter.Body.applyForce(
+        bodies[i],
+        Matter.Vertices.centre(bodies[i].vertices),
+        createVertex(0, 0.00098 * bodies[i].mass)
+      );
+      // bodies[i].force = createVertex(0, 0.00098 * bodies[i].mass);
       console.log({
         V: (bodies[i].velocity.y * 10) / 16.7,
         t: timeRan,
@@ -120,7 +124,7 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   An object that contains array of vertices
 */
 function createObject(vertices) {
-  return { vertices: vertices };
+  return { vertices: vertices, rotation: 0 };
 }
 
 /*
@@ -147,7 +151,7 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 0) {
+    if (i < 1) {
       //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
@@ -241,6 +245,8 @@ document.getElementById("window").addEventListener("mousemove", function(e) {
         objects[dragIndex].vertices[i].x += deltaX;
         objects[dragIndex].vertices[i].y += deltaY;
       }
+
+      rotate(dragIndex);
     }
     //update last psoition
     lastPosition = createVertex(e.pageX, e.pageY);
@@ -276,13 +282,98 @@ function translatePointOnCanvas(vertex) {
   return createVertex(vertex.x - canvasX, vertex.y - canvasY);
 }
 
+function rotate(index) {
+  if (objects[index].vertices.length == 4) {
+    var closestRampIndex = -1;
+    var distance = -1;
+    for (i = 0; i < objects.length; i++) {
+      if (objects[i].vertices.length == 3) {
+        if (closestRampIndex == -1) {
+          closestRampIndex = i;
+          distance = objDistance(objects[index], objects[i]);
+        } else {
+          var d2 = objDistance(objects[index], objects[i]);
+          if (d2 < distance) {
+            closestRampIndex = i;
+            distance = d2;
+          }
+        }
+      }
+    }
+    if (distance != -1 && distance < 100) {
+      var closestVertices = [];
+      var vertexDistances = [];
+      var objCenter = Matter.Vertices.centre(objects[index].vertices);
+      for (i = 0; i < 3; i++) {
+        vertexDistances.push(
+          vertexDistance(objCenter, objects[closestRampIndex].vertices[i])
+        );
+        closestVertices.push(objects[closestRampIndex].vertices[i]);
+      }
+      var largestVertex = vertexDistances.indexOf(Math.max(vertexDistances));
+      closestVertices.splice(largestVertex);
+      var rotateAmount = Math.atan(
+        (closestVertices[1].y - closestVertices[0].y) /
+          (closestVertices[1].x - closestVertices[0].x)
+      );
+      rotateVertices(objects[index], -1 * objects[index].rotation);
+      rotateVertices(objects[index], rotateAmount);
+      objects[index].rotation = rotateAmount;
+    } else {
+      rotateVertices(objects[index], -1 * objects[index].rotation);
+      objects[index].rotation = 0;
+    }
+  }
+}
+function rotateVertices(obj, angle) {
+  var center = Matter.Vertices.centre(obj.vertices);
+  for (i = 0; i < obj.vertices.length; i++) {
+    var cv = obj.vertices[i];
+    obj.vertices[i] = createVertex(
+      (cv.x - center.x) * Math.cos(angle) -
+        (cv.y - center.y) * Math.sin(angle) +
+        center.x,
+      (cv.x - center.x) * Math.sin(angle) +
+        (cv.y - center.y) * Math.cos(angle) +
+        center.y
+    );
+  }
+}
+
+function objDistance(obj1, obj2) {
+  var center1 = Matter.Vertices.centre(obj1.vertices);
+  var center2 = Matter.Vertices.centre(obj2.vertices);
+  return vertexDistance(center1, center2);
+}
+function vertexDistance(v1, v2) {
+  return Math.sqrt(Math.pow(v2.x - v1.x, 2) + Math.pow(v2.y - v1.y, 2));
+}
+
 //End Drag
 
 window.addEventListener(
   "message",
   function(e) {
-    var obj = createObject(e.data);
-    objects.push(obj);
+    if (e.data == "close") {
+      closeTriangleBuilder();
+    } else {
+      var obj = createObject(e.data);
+      objects.push(obj);
+    }
   },
   false
 );
+
+function openTriangleBuilder() {
+  var frame = document.createElement("IFRAME");
+  frame.id = "triangleBuilder";
+  frame.frameBorder = 0;
+  frame.src = "triangle.html";
+  document.body.appendChild(frame);
+}
+function closeTriangleBuilder() {
+  var frame = document.getElementById("triangleBuilder");
+  if (frame != null) {
+    document.body.removeChild(frame);
+  }
+}
