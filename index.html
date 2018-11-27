@@ -15,7 +15,15 @@
     <button onclick="objects.push(createRect(0, 750, 1000, 50))">
       Create Floor
     </button>
-    <button onclick="openTriangleBuilder()">Create Ramp</button>
+    <button onclick="objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800))">
+      Create Walls
+    </button>
+    <button onclick="openTriangleBuilder()">
+    	Create Ramp
+    </button>
+    <button onClick="objects.push(createRect(0, 750, 1000, 50)); objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800)); openTriangleBuilder()">
+    	CREATE SIM
+    </button>
     <button onclick="runSim()">Run</button>
     <!--
       <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>

@@ -145,7 +145,7 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 2) {
+    if (i < 4) {
       //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
