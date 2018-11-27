@@ -24,18 +24,12 @@ function animate(timeRan) {
     //Clear Objects
     objects = [];
     for (i = 0; i < bodies.length; i++) {
-      // Matter.Body.applyForce(
-      //   bodies[i],
-      //   Matter.Vertices.centre(bodies[i].vertices),
-      //   createVertex(0, 0.0098)
-      // );
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
       Matter.Body.applyForce(
         bodies[i],
         Matter.Vertices.centre(bodies[i].vertices),
         createVertex(0, 0.00098 * bodies[i].mass)
       );
-      // bodies[i].force = createVertex(0, 0.00098 * bodies[i].mass);
       console.log({
         V: (bodies[i].velocity.y * 10) / 16.7,
         t: timeRan,
@@ -151,12 +145,13 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 1) {
+    if (i < 2) {
       //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
+        friction: 0,
         isStatic: true,
         velocity: { x: 0, y: 0 }
       });
@@ -175,12 +170,12 @@ function runSim() {
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        mass: 1,
         friction: 0,
+        mass: 1,
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
-      Matter.Body.setMass(obj, 2);
+      Matter.Body.setMass(obj, 100);
       //		Matter.Body.setVelocity(obj, createVertex(0, 0));
       //		Matter.Body.setMass(obj, 1);
       // Matter.Body.applyForce(
