@@ -1,4 +1,5 @@
 var objects = [];
+var connections = []
 var engine;
 var usePhysics = false;
 var lastTime = 0;
@@ -30,11 +31,26 @@ function animate(timeRan) {
         Matter.Vertices.centre(bodies[i].vertices),
         createVertex(0, 0.00098 * bodies[i].mass)
       );
-      console.log({
-        V: (bodies[i].velocity.y * 10) / 16.7,
-        t: timeRan,
-        y: Matter.Vertices.centre(bodies[i].vertices).y
-      });
+      for(c = 0; c < connections.length; c++){
+        if(connections[c].includes(i)){
+          console.log("FOund i")
+          for(o = 0; o < connections[c].length; o++){
+            if(connections[c][o] != i){
+              console.log("Applied Oppisite appleying" + bodies[i].mass + "on " + bodies[connections[c][o]].mass)
+              Matter.Body.applyForce(
+                bodies[connections[c][o]], 
+                Matter.Vertices.centre(bodies[connections[c][o]].vertices), 
+                createVertex(0, -0.00098 * bodies[i].mass)
+              );
+            }
+          }
+        }
+      }
+      // console.log({
+      //   V: (bodies[i].velocity.y * 10) / 16.7,
+      //   t: timeRan,
+      //   y: Matter.Vertices.centre(bodies[i].vertices).y
+      // });
       objects.push(createObject(bodies[i].vertices));
     }
     //Make Engine Move Foward By Delta Time
@@ -105,6 +121,10 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   ];
   return polygon;
 }
+function createCircle(radius){
+  var circle = Matter.Bodies.circle(50, 50, radius);
+  objects.push(createObject(circle.vertices));
+}
 
 /*
   Creates A JS Object from the verticies. This object will
@@ -145,13 +165,14 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 4) {
+    if (i < 3) {
       //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        friction: 0,
+        friction: 1,
+        restitution: 0,
         isStatic: true,
         velocity: { x: 0, y: 0 }
       });
@@ -170,12 +191,17 @@ function runSim() {
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        friction: 0,
+        friction: 0.05,
+        restitution: 0,
         mass: 1,
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
-      Matter.Body.setMass(obj, 100);
+      if(i == 3){
+        Matter.Body.setMass(obj, 2);
+      }
+      
+      // Matter.Body.setMass(obj, 100);
       //		Matter.Body.setVelocity(obj, createVertex(0, 0));
       //		Matter.Body.setMass(obj, 1);
       // Matter.Body.applyForce(
@@ -194,17 +220,23 @@ function runSim() {
   usePhysics = true;
 
   //Create a Renderer. The Canvas is the main renderer this renderer is being used for debugging purposes and will be removed before final release
-  // var render = Matter.Render.create({
-  //   element: document.getElementById("matter-window"),
-  //   engine: engine
-  // });
+  var render = Matter.Render.create({
+    element: document.getElementById("matter-window"),
+    engine: engine,
+    options: {
+      showAngleIndicator: true
+    }
+  });
   //Run the Engine and the Renderer
-  // Matter.Render.run(render);
+  Matter.Render.run(render);
   // Matter.Engine.run(engine);
   var bodies = Matter.Composite.allBodies(engine.world);
   for (i = 0; i < bodies.length; i++) {
     Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
   }
+
+  connections.push([3, 4])
+  
 }
 
 //Start Drag
