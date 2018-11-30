@@ -1,5 +1,5 @@
 var objects = [];
-var connections = []
+var connections = [];
 var engine;
 var usePhysics = false;
 var lastTime = 0;
@@ -31,21 +31,20 @@ function animate(timeRan) {
         Matter.Vertices.centre(bodies[i].vertices),
         createVertex(0, 0.00098 * bodies[i].mass)
       );
-      for(c = 0; c < connections.length; c++){
-        if(connections[c].includes(i)){
-          console.log("FOund i")
-          for(o = 0; o < connections[c].length; o++){
-            if(connections[c][o] != i){
-              console.log("Applied Oppisite appleying" + bodies[i].mass + "on " + bodies[connections[c][o]].mass)
+      for (c = 0; c < connections.length; c++) {
+        if (connections[c].includes(i)) {
+          for (o = 0; o < connections[c].length; o++) {
+            if (connections[c][o] != i) {
               Matter.Body.applyForce(
-                bodies[connections[c][o]], 
-                Matter.Vertices.centre(bodies[connections[c][o]].vertices), 
+                bodies[connections[c][o]],
+                Matter.Vertices.centre(bodies[connections[c][o]].vertices),
                 createVertex(0, -0.00098 * bodies[i].mass)
               );
             }
           }
         }
       }
+
       // console.log({
       //   V: (bodies[i].velocity.y * 10) / 16.7,
       //   t: timeRan,
@@ -53,6 +52,52 @@ function animate(timeRan) {
       // });
       objects.push(createObject(bodies[i].vertices));
     }
+    for (i = 0; i < bodies.length; i++) {
+      if (!bodies[i].isStatic && bodies[i].force.y > 0) {
+        // console.log(bodies[i].force.y);
+        // console.log({ force: bodies[i].force, mass: bodies[i].mass });
+      }
+    }
+    for (p = 0; p < 2; p++) {
+      var pulleyCenter = Matter.Vertices.centre(
+        bodies[bodies.length - 1].vertices
+      );
+      // console.log("pulley center: " + pulleyCenter);
+      var pulleyRadius = 50;
+      var objCenter = Matter.Vertices.centre(
+        bodies[bodies.length - (2 + p)].vertices
+      );
+      var distance = vertexDistance(pulleyCenter, objCenter);
+      var midPoint = createVertex(
+        (pulleyCenter.x + objCenter.x) / 2,
+        (pulleyCenter.y + objCenter.y) / 2
+      );
+      var tangents = intersection(
+        pulleyCenter.x,
+        pulleyCenter.y,
+        pulleyRadius,
+        midPoint.x,
+        midPoint.y,
+        distance / 2
+      );
+      if (tangents != false) {
+        var startIndex = 0;
+        var endIndex = 1;
+        if (tangents[3] < tangents[1]) {
+          startIndex = 1;
+          endIndex = 2;
+        }
+        for (i = startIndex; i < endIndex; i++) {
+          ctx.strokeStyle = "#FF0000";
+          ctx.lineWidth = 10;
+          ctx.beginPath();
+          ctx.moveTo(objCenter.x, objCenter.y);
+          ctx.lineTo(tangents[i * 2], tangents[1 + i * 2]);
+          ctx.stroke();
+        }
+      }
+    }
+
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
   }
@@ -121,7 +166,7 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   ];
   return polygon;
 }
-function createCircle(radius){
+function createCircle(radius) {
   var circle = Matter.Bodies.circle(50, 50, radius);
   objects.push(createObject(circle.vertices));
 }
@@ -165,7 +210,7 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 3) {
+    if (i < 3 || i == 5) {
       //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
@@ -197,10 +242,10 @@ function runSim() {
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
-      if(i == 3){
+      if (i == 3) {
         Matter.Body.setMass(obj, 2);
       }
-      
+
       // Matter.Body.setMass(obj, 100);
       //		Matter.Body.setVelocity(obj, createVertex(0, 0));
       //		Matter.Body.setMass(obj, 1);
@@ -220,23 +265,22 @@ function runSim() {
   usePhysics = true;
 
   //Create a Renderer. The Canvas is the main renderer this renderer is being used for debugging purposes and will be removed before final release
-  var render = Matter.Render.create({
-    element: document.getElementById("matter-window"),
-    engine: engine,
-    options: {
-      showAngleIndicator: true
-    }
-  });
+  // var render = Matter.Render.create({
+  //   element: document.getElementById("matter-window"),
+  //   engine: engine,
+  //   options: {
+  //     showAngleIndicator: true
+  //   }
+  // });
   //Run the Engine and the Renderer
-  Matter.Render.run(render);
+  // Matter.Render.run(render);
   // Matter.Engine.run(engine);
   var bodies = Matter.Composite.allBodies(engine.world);
   for (i = 0; i < bodies.length; i++) {
     Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
   }
 
-  connections.push([3, 4])
-  
+  connections.push([3, 4]);
 }
 
 //Start Drag
@@ -260,7 +304,6 @@ document.getElementById("window").addEventListener("mousedown", function(e) {
   }
 });
 document.getElementById("window").addEventListener("mousemove", function(e) {
-  console.log("move");
   //Check if the mouse was down
   if (isDragging) {
     //Find change in x and y
@@ -280,7 +323,6 @@ document.getElementById("window").addEventListener("mousemove", function(e) {
   }
 });
 document.getElementById("window").addEventListener("mouseup", function(e) {
-  console.log("up");
   //Stop dragging
   isDragging = false;
   //Make no object be selected
@@ -403,4 +445,58 @@ function closeTriangleBuilder() {
   if (frame != null) {
     document.body.removeChild(frame);
   }
+}
+function intersection(x0, y0, r0, x1, y1, r1) {
+  var a, dx, dy, d, h, rx, ry;
+  var x2, y2;
+
+  /* dx and dy are the vertical and horizontal distances between
+   * the circle centers.
+   */
+  dx = x1 - x0;
+  dy = y1 - y0;
+
+  /* Determine the straight-line distance between the centers. */
+  d = Math.sqrt(dy * dy + dx * dx);
+
+  /* Check for solvability. */
+  if (d > r0 + r1) {
+    /* no solution. circles do not intersect. */
+    return false;
+  }
+  if (d < Math.abs(r0 - r1)) {
+    /* no solution. one circle is contained in the other */
+    return false;
+  }
+
+  /* 'point 2' is the point where the line through the circle
+   * intersection points crosses the line between the circle
+   * centers.
+   */
+
+  /* Determine the distance from point 0 to point 2. */
+  a = (r0 * r0 - r1 * r1 + d * d) / (2.0 * d);
+
+  /* Determine the coordinates of point 2. */
+  x2 = x0 + (dx * a) / d;
+  y2 = y0 + (dy * a) / d;
+
+  /* Determine the distance from point 2 to either of the
+   * intersection points.
+   */
+  h = Math.sqrt(r0 * r0 - a * a);
+
+  /* Now determine the offsets of the intersection points from
+   * point 2.
+   */
+  rx = -dy * (h / d);
+  ry = dx * (h / d);
+
+  /* Determine the absolute intersection points. */
+  var xi = x2 + rx;
+  var xi_prime = x2 - rx;
+  var yi = y2 + ry;
+  var yi_prime = y2 - ry;
+
+  return [xi, yi, xi_prime, yi_prime];
 }
