@@ -20,6 +20,12 @@ function animate(timeRan) {
 
   //This will be true once run is pressed
   if (usePhysics) {
+    for(c = 0; c < connections.length; c++){
+      drawTangentalLine(connections[c].obj1, connections[c].pulley, connections[c])
+      drawTangentalLine(connections[c].obj2, connections[c].pulley, connections[c])
+    }
+
+
     //Get all bodies from the Matter World
     var bodies = Matter.Composite.allBodies(engine.world);
     //Clear Objects
@@ -32,16 +38,19 @@ function animate(timeRan) {
         createVertex(0, 0.00098 * bodies[i].mass)
       );
       for (c = 0; c < connections.length; c++) {
-        if (connections[c].includes(i)) {
-          for (o = 0; o < connections[c].length; o++) {
-            if (connections[c][o] != i) {
-              Matter.Body.applyForce(
-                bodies[connections[c][o]],
-                Matter.Vertices.centre(bodies[connections[c][o]].vertices),
-                createVertex(0, -0.00098 * bodies[i].mass)
-              );
-            }
+        var connection = connections[c]
+        if(connection.obj1 == i || connection.obj2 == i){
+          var objToApply = connection.obj1
+          var tanPoint = connection.obj1Tan
+          if(i == connection.obj1){
+            objToApply = connection.obj2
+            tanPoint = connection.obj2Tan
           }
+          var force = bodies[i].force;
+          console.log(force.y)
+          force = Math.sqrt(Math.pow(force.x, 2) + Math.pow(force.y, 2)); 
+          //reverse force!!!!!!!!!!!!!!!
+          Matter.Body.applyForce(bodies[objToApply], Matter.Vertices.centre(bodies[objToApply].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force))
         }
       }
 
@@ -58,45 +67,7 @@ function animate(timeRan) {
         // console.log({ force: bodies[i].force, mass: bodies[i].mass });
       }
     }
-    for (p = 0; p < 2; p++) {
-      var pulleyCenter = Matter.Vertices.centre(
-        bodies[bodies.length - 1].vertices
-      );
-      // console.log("pulley center: " + pulleyCenter);
-      var pulleyRadius = 50;
-      var objCenter = Matter.Vertices.centre(
-        bodies[bodies.length - (2 + p)].vertices
-      );
-      var distance = vertexDistance(pulleyCenter, objCenter);
-      var midPoint = createVertex(
-        (pulleyCenter.x + objCenter.x) / 2,
-        (pulleyCenter.y + objCenter.y) / 2
-      );
-      var tangents = intersection(
-        pulleyCenter.x,
-        pulleyCenter.y,
-        pulleyRadius,
-        midPoint.x,
-        midPoint.y,
-        distance / 2
-      );
-      if (tangents != false) {
-        var startIndex = 0;
-        var endIndex = 1;
-        if (tangents[3] < tangents[1]) {
-          startIndex = 1;
-          endIndex = 2;
-        }
-        for (i = startIndex; i < endIndex; i++) {
-          ctx.strokeStyle = "#FF0000";
-          ctx.lineWidth = 10;
-          ctx.beginPath();
-          ctx.moveTo(objCenter.x, objCenter.y);
-          ctx.lineTo(tangents[i * 2], tangents[1 + i * 2]);
-          ctx.stroke();
-        }
-      }
-    }
+    
 
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
@@ -129,6 +100,53 @@ function drawObjects(ctx) {
     ctx.lineTo(objects[i].vertices[0].x, objects[i].vertices[0].y);
     //Fill in the shape with color
     ctx.fill();
+  }
+}
+
+function drawTangentalLine(obj, pulley, connection){
+  var ctx = document.getElementById('window').getContext('2d')
+
+  var pulleyCenter = Matter.Vertices.centre(
+    objects[pulley].vertices
+  );
+  // console.log("pulley center: " + pulleyCenter);
+  var pulleyRadius = 50;
+  var objCenter = Matter.Vertices.centre(
+    objects[obj].vertices
+  );
+  var distance = vertexDistance(pulleyCenter, objCenter);
+  var midPoint = createVertex(
+    (pulleyCenter.x + objCenter.x) / 2,
+    (pulleyCenter.y + objCenter.y) / 2
+  );
+  var tangents = intersection(
+    pulleyCenter.x,
+    pulleyCenter.y,
+    pulleyRadius,
+    midPoint.x,
+    midPoint.y,
+    distance / 2
+  );
+  if (tangents != false) {
+    var startIndex = 0;
+    var endIndex = 1;
+    if (tangents[3] < tangents[1]) {
+      startIndex = 1;
+      endIndex = 2;
+    }
+    for (i = startIndex; i < endIndex; i++) {
+      if(connection.obj1 == obj){
+        connection.obj1Tan = createVertex(tangents[i * 2], tangents[1 + i * 2])
+      }else{
+        connection.obj2Tan = createVertex(tangents[i * 2], tangents[1 + i * 2])
+      }
+      ctx.strokeStyle = "#FF0000";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(objCenter.x, objCenter.y);
+      ctx.lineTo(tangents[i * 2], tangents[1 + i * 2]);
+      ctx.stroke();
+    }
   }
 }
 
@@ -280,7 +298,17 @@ function runSim() {
     Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
   }
 
-  connections.push([3, 4]);
+  connections.push(createConnection(objects.length - 3, objects.length - 2, objects.length - 1))
+}
+function createConnection(obj1, obj2, pulley){
+  var c = {
+    obj1: obj1,
+    obj2: obj2,
+    pulley: pulley,
+    obj1Tan: null,
+    obj2Tan: null
+  }
+  return c
 }
 
 //Start Drag
