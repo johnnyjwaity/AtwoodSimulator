@@ -4,6 +4,9 @@ var engine;
 var usePhysics = false;
 var lastTime = 0;
 var startHeight = 55;
+var abovePulley = false;
+var previousPos = -1;
+var circleRadius = 0;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -32,27 +35,60 @@ function animate(timeRan) {
     objects = [];
     for (i = 0; i < bodies.length; i++) {
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
-      Matter.Body.applyForce(
-        bodies[i],
-        Matter.Vertices.centre(bodies[i].vertices),
-        createVertex(0, 0.00098 * bodies[i].mass)
-      );
-      for (c = 0; c < connections.length; c++) {
-        var connection = connections[c]
-        if(connection.obj1 == i || connection.obj2 == i){
-          var objToApply = connection.obj1
-          var tanPoint = connection.obj1Tan
-          if(i == connection.obj1){
-            objToApply = connection.obj2
-            tanPoint = connection.obj2Tan
+      previousPos = bodies[i].position.y;
+      if (abovePulley != true){
+        Matter.Body.applyForce(
+          bodies[i],
+          Matter.Vertices.centre(bodies[i].vertices),
+          createVertex(0, 0.00098 * bodies[i].mass)
+        );
+      }
+      console.log("Previous Pos: "+previousPos);
+      if (i > 2){
+        if (bodies[i].position.y < bodies[5].position.y){
+          abovePulley = true;
+          // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
+          // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
+          // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
+          // Matter.Vertices.centre(bodies[i].vertices),
+          // createVertex(0, -0.01 * bodies[i].mass);
+          // Matter.setStatic("true");
+          Matter.Body.setStatic(bodies[i], "true");
+          Matter.Body.setStatic(bodies[i-1], "true");
+          console.log("POSITION: "+bodies[i].position.y);
+        }
+        else if (bodies[i].position.y >= 750-circleRadius){
+          abovePulley = true;
+          // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
+          // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
+          // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
+          // Matter.Vertices.centre(bodies[i].vertices),
+          // createVertex(0, -0.01 * bodies[i].mass);
+          // Matter.setStatic("true");
+          console.log("TEST: "+i);
+          Matter.Body.setStatic(bodies[i], "true");
+          Matter.Body.setStatic(bodies[i+1], "true");
+        }
+        else if (abovePulley == false){
+          for (c = 0; c < connections.length; c++) {
+            var connection = connections[c]
+            if(connection.obj1 == i || connection.obj2 == i){
+              var objToApply = connection.obj1
+              var tanPoint = connection.obj1Tan
+              if(i == connection.obj1){
+                objToApply = connection.obj2
+                tanPoint = connection.obj2Tan
+              }
+              var force = bodies[i].force;
+              console.log(bodies[i].position.x);
+              force = Math.sqrt(Math.pow(force.x, 2) + Math.pow(force.y, 2)); 
+              Matter.Body.applyForce(bodies[objToApply], Matter.Vertices.centre(bodies[objToApply].vertices), createVertex(-Math.cos(Math.PI / 2) * force, -Math.sin(Math.PI / 2) * force));
+            }
           }
-          var force = bodies[i].force;
-          console.log(force.y)
-          force = Math.sqrt(Math.pow(force.x, 2) + Math.pow(force.y, 2)); 
-          //reverse force!!!!!!!!!!!!!!!
-          Matter.Body.applyForce(bodies[objToApply], Matter.Vertices.centre(bodies[objToApply].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force))
         }
       }
+      
+      
 
       // console.log({
       //   V: (bodies[i].velocity.y * 10) / 16.7,
@@ -67,7 +103,6 @@ function animate(timeRan) {
         // console.log({ force: bodies[i].force, mass: bodies[i].mass });
       }
     }
-    
 
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
@@ -184,7 +219,10 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   ];
   return polygon;
 }
-function createCircle(radius) {
+function createCircle(radius, type) {
+  if (type === "circleObject"){
+    circleRadius = radius;
+  }
   var circle = Matter.Bodies.circle(50, 50, radius);
   objects.push(createObject(circle.vertices));
 }
@@ -261,7 +299,7 @@ function runSim() {
         velocity: { x: 0, y: 0 }
       });
       if (i == 3) {
-        Matter.Body.setMass(obj, 2);
+        Matter.Body.setMass(obj, 1.5);
       }
 
       // Matter.Body.setMass(obj, 100);
