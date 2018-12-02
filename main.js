@@ -23,11 +23,18 @@ function animate(timeRan) {
 
   //This will be true once run is pressed
   if (usePhysics) {
-    for(c = 0; c < connections.length; c++){
-      drawTangentalLine(connections[c].obj1, connections[c].pulley, connections[c])
-      drawTangentalLine(connections[c].obj2, connections[c].pulley, connections[c])
+    for (c = 0; c < connections.length; c++) {
+      drawTangentalLine(
+        connections[c].obj1,
+        connections[c].pulley,
+        connections[c]
+      );
+      drawTangentalLine(
+        connections[c].obj2,
+        connections[c].pulley,
+        connections[c]
+      );
     }
-
 
     //Get all bodies from the Matter World
     var bodies = Matter.Composite.allBodies(engine.world);
@@ -36,16 +43,16 @@ function animate(timeRan) {
     for (i = 0; i < bodies.length; i++) {
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
       previousPos = bodies[i].position.y;
-      if (abovePulley != true){
+      if (abovePulley != true) {
         Matter.Body.applyForce(
           bodies[i],
           Matter.Vertices.centre(bodies[i].vertices),
           createVertex(0, 0.00098 * bodies[i].mass)
         );
       }
-      console.log("Previous Pos: "+previousPos);
-      if (i > 2){
-        if (bodies[i].position.y < bodies[5].position.y){
+      // console.log("Previous Pos: " + previousPos);
+      if (i > 2) {
+        if (bodies[i].position.y < bodies[5].position.y) {
           abovePulley = true;
           // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
           // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
@@ -54,10 +61,9 @@ function animate(timeRan) {
           // createVertex(0, -0.01 * bodies[i].mass);
           // Matter.setStatic("true");
           Matter.Body.setStatic(bodies[i], "true");
-          Matter.Body.setStatic(bodies[i-1], "true");
-          console.log("POSITION: "+bodies[i].position.y);
-        }
-        else if (bodies[i].position.y >= 750-circleRadius){
+          Matter.Body.setStatic(bodies[i - 1], "true");
+          // console.log("POSITION: " + bodies[i].position.y);
+        } else if (bodies[i].position.y >= 750 - circleRadius) {
           abovePulley = true;
           // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
           // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
@@ -65,30 +71,46 @@ function animate(timeRan) {
           // Matter.Vertices.centre(bodies[i].vertices),
           // createVertex(0, -0.01 * bodies[i].mass);
           // Matter.setStatic("true");
-          console.log("TEST: "+i);
+          // console.log("TEST: " + i);
           Matter.Body.setStatic(bodies[i], "true");
-          Matter.Body.setStatic(bodies[i+1], "true");
+          Matter.Body.setStatic(bodies[i + 1], "true");
         }
-        else if (abovePulley == false){
+        if (abovePulley == false) {
           for (c = 0; c < connections.length; c++) {
-            var connection = connections[c]
-            if(connection.obj1 == i || connection.obj2 == i){
-              var objToApply = connection.obj1
-              var tanPoint = connection.obj1Tan
-              if(i == connection.obj1){
-                objToApply = connection.obj2
-                tanPoint = connection.obj2Tan
+            var connection = connections[c];
+            if (connection.obj1 == i || connection.obj2 == i) {
+              var objToApply = connection.obj1;
+              var tanPoint = connection.obj1Tan;
+              if (i == connection.obj1) {
+                objToApply = connection.obj2;
+                tanPoint = connection.obj2Tan;
               }
-              var force = bodies[i].force;
-              console.log(bodies[i].position.x);
-              force = Math.sqrt(Math.pow(force.x, 2) + Math.pow(force.y, 2)); 
-              Matter.Body.applyForce(bodies[objToApply], Matter.Vertices.centre(bodies[objToApply].vertices), createVertex(-Math.cos(Math.PI / 2) * force, -Math.sin(Math.PI / 2) * force));
+              var tensionAngle = -Math.atan2(
+                -bodies[objToApply].position.y + tanPoint.y,
+                -bodies[objToApply].position.x + tanPoint.x
+              );
+              console.log([
+                tensionAngle * (180 / Math.PI),
+                bodies[objToApply].mass
+              ]);
+              var tension = calculateTension(connection, bodies);
+              tension = createVertex(
+                tension * Math.cos(tensionAngle),
+                -tension
+              );
+              if (bodies[objToApply].mass == 1) {
+                console.log(tension);
+              }
+
+              Matter.Body.applyForce(
+                bodies[objToApply],
+                Matter.Vertices.centre(bodies[objToApply].vertices),
+                tension
+              );
             }
           }
         }
       }
-      
-      
 
       // console.log({
       //   V: (bodies[i].velocity.y * 10) / 16.7,
@@ -114,6 +136,19 @@ function animate(timeRan) {
 //Initial Animate Start
 animate();
 
+function calculateTension(c, bodies) {
+  var accleration =
+    0.00098 *
+    ((bodies[c.obj1].mass - bodies[c.obj2].mass) /
+      (bodies[c.obj1].mass + bodies[c.obj2].mass));
+  if (bodies[c.obj1].mass > bodies[c.obj2].mass) {
+    accleration *= -1;
+  }
+  var tension =
+    accleration * bodies[c.obj1].mass + 0.00098 * bodies[c.obj1].mass;
+  return tension;
+}
+
 /*
   This method will take all the objects from the objects 
   array and draw them onto the canvas using their vertices
@@ -138,17 +173,13 @@ function drawObjects(ctx) {
   }
 }
 
-function drawTangentalLine(obj, pulley, connection){
-  var ctx = document.getElementById('window').getContext('2d')
+function drawTangentalLine(obj, pulley, connection) {
+  var ctx = document.getElementById("window").getContext("2d");
 
-  var pulleyCenter = Matter.Vertices.centre(
-    objects[pulley].vertices
-  );
+  var pulleyCenter = Matter.Vertices.centre(objects[pulley].vertices);
   // console.log("pulley center: " + pulleyCenter);
   var pulleyRadius = 50;
-  var objCenter = Matter.Vertices.centre(
-    objects[obj].vertices
-  );
+  var objCenter = Matter.Vertices.centre(objects[obj].vertices);
   var distance = vertexDistance(pulleyCenter, objCenter);
   var midPoint = createVertex(
     (pulleyCenter.x + objCenter.x) / 2,
@@ -169,11 +200,39 @@ function drawTangentalLine(obj, pulley, connection){
       startIndex = 1;
       endIndex = 2;
     }
+    if (
+      connection.hasOwnProperty("lastObj1Tan") &&
+      connection.hasOwnProperty("lastObj2Tan")
+    ) {
+      var lastPosition = connection.lastObj1Tan;
+      if (obj == connection.obj2) {
+        lastPosition = connection.lastObj2Tan;
+      }
+      if (lastPosition != null) {
+        var dist1 = vertexDistance(
+          createVertex(tangents[0], tangents[1]),
+          lastPosition
+        );
+        var dist2 = vertexDistance(
+          createVertex(tangents[2], tangents[3]),
+          lastPosition
+        );
+        if (dist1 < dist2) {
+          startIndex = 0;
+          endIndex = 1;
+        } else {
+          startIndex = 1;
+          endIndex = 2;
+        }
+      }
+    }
     for (i = startIndex; i < endIndex; i++) {
-      if(connection.obj1 == obj){
-        connection.obj1Tan = createVertex(tangents[i * 2], tangents[1 + i * 2])
-      }else{
-        connection.obj2Tan = createVertex(tangents[i * 2], tangents[1 + i * 2])
+      if (connection.obj1 == obj) {
+        connection.lastObj1Tan = connection.obj1Tan;
+        connection.obj1Tan = createVertex(tangents[i * 2], tangents[1 + i * 2]);
+      } else {
+        connection.lastObj2Tan = connection.obj2Tan;
+        connection.obj2Tan = createVertex(tangents[i * 2], tangents[1 + i * 2]);
       }
       ctx.strokeStyle = "#FF0000";
       ctx.lineWidth = 4;
@@ -220,7 +279,7 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   return polygon;
 }
 function createCircle(radius, type) {
-  if (type === "circleObject"){
+  if (type === "circleObject") {
     circleRadius = radius;
   }
   var circle = Matter.Bodies.circle(50, 50, radius);
@@ -253,7 +312,13 @@ function createObject(vertices) {
   Object that contains the x and y
 */
 function createVertex(x, y) {
-  return { x: x, y: y };
+  return {
+    x: x,
+    y: y,
+    magnitude: function() {
+      return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    }
+  };
 }
 
 /*
@@ -299,7 +364,7 @@ function runSim() {
         velocity: { x: 0, y: 0 }
       });
       if (i == 3) {
-        Matter.Body.setMass(obj, 1.5);
+        Matter.Body.setMass(obj, 1);
       }
 
       // Matter.Body.setMass(obj, 100);
@@ -336,17 +401,19 @@ function runSim() {
     Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
   }
 
-  connections.push(createConnection(objects.length - 3, objects.length - 2, objects.length - 1))
+  connections.push(
+    createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
+  );
 }
-function createConnection(obj1, obj2, pulley){
+function createConnection(obj1, obj2, pulley) {
   var c = {
     obj1: obj1,
     obj2: obj2,
     pulley: pulley,
     obj1Tan: null,
     obj2Tan: null
-  }
-  return c
+  };
+  return c;
 }
 
 //Start Drag
