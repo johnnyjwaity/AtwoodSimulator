@@ -6,7 +6,6 @@ var lastTime = 0;
 var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
-var circleRadius = 0;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -63,7 +62,7 @@ function animate(timeRan) {
           Matter.Body.setStatic(bodies[i], "true");
           Matter.Body.setStatic(bodies[i - 1], "true");
           // console.log("POSITION: " + bodies[i].position.y);
-        } else if (bodies[i].position.y >= 750 - circleRadius) {
+        } else if (bodies[i].position.y >= 750 - vertexDistance(Matter.Vertices.centre(bodies[i].vertices), bodies[i].vertices[0])) {
           abovePulley = true;
           // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
           // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
@@ -98,9 +97,7 @@ function animate(timeRan) {
                 tension * Math.cos(tensionAngle),
                 -tension
               );
-              if (bodies[objToApply].mass == 1) {
-                console.log(tension);
-              }
+              console.log(tension)
 
               Matter.Body.applyForce(
                 bodies[objToApply],
@@ -144,8 +141,15 @@ function calculateTension(c, bodies) {
   if (bodies[c.obj1].mass > bodies[c.obj2].mass) {
     accleration *= -1;
   }
+  console.log(bodies[c.obj1].mass)
+  console.log(bodies[c.obj2].mass)
+  console.log(accleration)
+
   var tension =
-    accleration * bodies[c.obj1].mass + 0.00098 * bodies[c.obj1].mass;
+    accleration * bodies[c.obj2].mass + 0.00098 * bodies[c.obj2].mass;
+    console.log(tension)
+    console.log(bodies[c.obj1].mass)
+  console.log(bodies[c.obj2].mass)
   return tension;
 }
 
@@ -278,12 +282,26 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   ];
   return polygon;
 }
-function createCircle(radius, type) {
+function createCircle(radius, mass, type) {
   if (type === "circleObject") {
-    circleRadius = radius;
+    // circleRadius = newRadius;
+    var newRadius = determineMass(mass);
+    // circleRadius = newRadius;
+    var circle = Matter.Bodies.circle(50, 50, newRadius);
+    var obj = createObject(circle.vertices)
+    obj.mass = mass
+    console.log("Mass: " + obj.mass)
+    objects.push(obj);
   }
-  var circle = Matter.Bodies.circle(50, 50, radius);
-  objects.push(createObject(circle.vertices));
+  else {
+    var circle = Matter.Bodies.circle(50, 50, radius);
+    objects.push(createObject(circle.vertices));
+  }
+}
+
+function determineMass(mass){
+  var radiusDefault = 15;
+  return radiusDefault * mass;
 }
 
 /*
@@ -342,13 +360,6 @@ function runSim() {
         isStatic: true,
         velocity: { x: 0, y: 0 }
       });
-      //		Matter.Body.setVelocity(obj, createVertex(0, 0));
-      //		Matter.Body.setMass(obj, 1);
-      Matter.Body.applyForce(
-        obj,
-        { x: obj.position.x, y: obj.position.y },
-        { x: 0, y: 0 }
-      ); //control amount of force applied
       console.log(obj.position);
       //Add these bodies to the world
       Matter.World.add(e.world, [obj]);
@@ -359,24 +370,19 @@ function runSim() {
         frictionAir: 0,
         friction: 0.05,
         restitution: 0,
-        mass: 1,
+        mass: objects[i].mass,
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
-      if (i == 3) {
-        Matter.Body.setMass(obj, 1);
+      // console.log(obj.mass)
+      if(i == 3){
+        // Matter.Body.setMass(obj, 2)
       }
-
-      // Matter.Body.setMass(obj, 100);
-      //		Matter.Body.setVelocity(obj, createVertex(0, 0));
-      //		Matter.Body.setMass(obj, 1);
-      // Matter.Body.applyForce(
-      //   obj,
-      //   { x: obj.position.x, y: obj.position.y },
-      //   { x: 0, y: 0.098 }
-      // ); //control amount of force applied
-
-      console.log(obj.position);
+      if(objects[i].hasOwnProperty('mass')){
+        // console.log(objects[i].mass)
+        // Matter.Body.setMass(obj, objects[i].mass)
+      }
+      // console.log(obj.position);
       //Add these bodies to the world
       Matter.World.add(e.world, [obj]);
     }
@@ -396,10 +402,6 @@ function runSim() {
   //Run the Engine and the Renderer
   // Matter.Render.run(render);
   // Matter.Engine.run(engine);
-  var bodies = Matter.Composite.allBodies(engine.world);
-  for (i = 0; i < bodies.length; i++) {
-    Matter.Body.setVelocity(bodies[i], createVertex(0, 0));
-  }
 
   connections.push(
     createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
