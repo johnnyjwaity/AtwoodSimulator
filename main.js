@@ -59,8 +59,8 @@ function animate(timeRan) {
           // Matter.Vertices.centre(bodies[i].vertices),
           // createVertex(0, -0.01 * bodies[i].mass);
           // Matter.setStatic("true");
-          Matter.Body.setStatic(bodies[i], "true");
-          Matter.Body.setStatic(bodies[i - 1], "true");
+          // Matter.Body.setStatic(bodies[i], "true");
+          // Matter.Body.setStatic(bodies[i - 1], "true");
           // console.log("POSITION: " + bodies[i].position.y);
         } else if (bodies[i].position.y >= 750 - vertexDistance(Matter.Vertices.centre(bodies[i].vertices), bodies[i].vertices[0])) {
           abovePulley = true;
@@ -71,8 +71,9 @@ function animate(timeRan) {
           // createVertex(0, -0.01 * bodies[i].mass);
           // Matter.setStatic("true");
           // console.log("TEST: " + i);
-          Matter.Body.setStatic(bodies[i], "true");
-          Matter.Body.setStatic(bodies[i + 1], "true");
+        
+          // Matter.Body.setStatic(bodies[i], "true");
+          // Matter.Body.setStatic(bodies[i + 1], "true");
         }
         if (abovePulley == false) {
           for (c = 0; c < connections.length; c++) {
@@ -88,16 +89,16 @@ function animate(timeRan) {
                 -bodies[objToApply].position.y + tanPoint.y,
                 -bodies[objToApply].position.x + tanPoint.x
               );
-              console.log([
-                tensionAngle * (180 / Math.PI),
-                bodies[objToApply].mass
-              ]);
+              // console.log([
+              //   tensionAngle * (180 / Math.PI),
+              //   bodies[objToApply].mass
+              // ]);
               var tension = calculateTension(connection, bodies);
               tension = createVertex(
                 tension * Math.cos(tensionAngle),
                 -tension
               );
-              console.log(tension)
+              // console.log(tension)
 
               Matter.Body.applyForce(
                 bodies[objToApply],
@@ -133,24 +134,33 @@ function animate(timeRan) {
 //Initial Animate Start
 animate();
 
-function calculateTension(c, bodies) {
-  var accleration =
-    0.00098 *
-    ((bodies[c.obj1].mass - bodies[c.obj2].mass) /
-      (bodies[c.obj1].mass + bodies[c.obj2].mass));
-  if (bodies[c.obj1].mass > bodies[c.obj2].mass) {
-    accleration *= -1;
-  }
-  console.log(bodies[c.obj1].mass)
-  console.log(bodies[c.obj2].mass)
-  console.log(accleration)
 
-  var tension =
-    accleration * bodies[c.obj2].mass + 0.00098 * bodies[c.obj2].mass;
-    console.log(tension)
-    console.log(bodies[c.obj1].mass)
-  console.log(bodies[c.obj2].mass)
-  return tension;
+
+// function calculateTension(c, bodies) {
+//   var accleration =
+//     0.00098 *
+//     ((bodies[c.obj1].mass - bodies[c.obj2].mass) /
+//       (bodies[c.obj1].mass + bodies[c.obj2].mass));
+//   if (bodies[c.obj1].mass > bodies[c.obj2].mass) {
+//     accleration *= -1;
+//   }
+//   console.log(bodies[c.obj1].mass)
+//   console.log(bodies[c.obj2].mass)
+//   console.log(accleration)
+//   var tension =
+//     accleration * bodies[c.obj2].mass + 0.00098 * bodies[c.obj2].mass;
+//     console.log(tension)
+//     console.log(bodies[c.obj1].mass)
+//   console.log(bodies[c.obj2].mass)
+//   return tension;
+// }
+
+function calculateTension(c, bodies){
+  // console.log(bodies[c.obj1])
+  // console.log(bodies[c.obj2])
+  var tension = 2 * 0.00098 * bodies[c.obj1].mass * bodies[c.obj2].mass / (bodies[c.obj1].mass + bodies[c.obj2].mass)
+  // console.log(tension)
+  return tension
 }
 
 /*
@@ -290,7 +300,6 @@ function createCircle(radius, mass, type) {
     var circle = Matter.Bodies.circle(50, 50, newRadius);
     var obj = createObject(circle.vertices)
     obj.mass = mass
-    console.log("Mass: " + obj.mass)
     objects.push(obj);
   }
   else {
@@ -360,7 +369,6 @@ function runSim() {
         isStatic: true,
         velocity: { x: 0, y: 0 }
       });
-      console.log(obj.position);
       //Add these bodies to the world
       Matter.World.add(e.world, [obj]);
     } else {
@@ -370,13 +378,13 @@ function runSim() {
         frictionAir: 0,
         friction: 0.05,
         restitution: 0,
-        mass: objects[i].mass,
+        mass: 10,
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
       // console.log(obj.mass)
       if(i == 3){
-        // Matter.Body.setMass(obj, 2)
+        Matter.Body.setMass(obj, 5)
       }
       if(objects[i].hasOwnProperty('mass')){
         // console.log(objects[i].mass)
@@ -390,6 +398,15 @@ function runSim() {
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
   usePhysics = true;
+
+  Matter.Events.on(engine, 'collisionStart', function(event){
+    var e = event.pairs
+    for(i = 0; i < e.length; i ++){
+      console.log(e)
+      Matter.Body.setStatic(e[i].bodyA, "true")
+      Matter.Body.setStatic(e[i].bodyB, "true")
+    }
+  })
 
   //Create a Renderer. The Canvas is the main renderer this renderer is being used for debugging purposes and will be removed before final release
   // var render = Matter.Render.create({
