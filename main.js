@@ -34,7 +34,6 @@ function animate(timeRan) {
         connections[c]
       );
     }
-
     //Get all bodies from the Matter World
     var bodies = Matter.Composite.allBodies(engine.world);
     //Clear Objects
@@ -52,7 +51,7 @@ function animate(timeRan) {
       // console.log("Previous Pos: " + previousPos);
       if (i > 2) {
         if (bodies[i].position.y < bodies[5].position.y) {
-          abovePulley = true;
+          // abovePulley = true;
           // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
           // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
           // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
@@ -62,8 +61,15 @@ function animate(timeRan) {
           // Matter.Body.setStatic(bodies[i], "true");
           // Matter.Body.setStatic(bodies[i - 1], "true");
           // console.log("POSITION: " + bodies[i].position.y);
-        } else if (bodies[i].position.y >= 750 - vertexDistance(Matter.Vertices.centre(bodies[i].vertices), bodies[i].vertices[0])) {
-          abovePulley = true;
+        } else if (
+          bodies[i].position.y >=
+          750 -
+            vertexDistance(
+              Matter.Vertices.centre(bodies[i].vertices),
+              bodies[i].vertices[0]
+            )
+        ) {
+          // abovePulley = true;
           // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
           // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
           // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
@@ -71,7 +77,6 @@ function animate(timeRan) {
           // createVertex(0, -0.01 * bodies[i].mass);
           // Matter.setStatic("true");
           // console.log("TEST: " + i);
-        
           // Matter.Body.setStatic(bodies[i], "true");
           // Matter.Body.setStatic(bodies[i + 1], "true");
         }
@@ -94,17 +99,29 @@ function animate(timeRan) {
               //   bodies[objToApply].mass
               // ]);
               var tension = calculateTension(connection, bodies);
-              tension = createVertex(
-                tension * Math.cos(tensionAngle),
-                -tension
-              );
+              // tension = createVertex(
+              //   tension * Math.cos(tensionAngle),
+              //   -tension
+              // );
               // console.log(tension)
+              console.log(
+                vertexDistance(
+                  bodies[connection.obj1].position,
+                  connection.obj1Tan
+                ) +
+                  vertexDistance(
+                    bodies[connection.obj2].position,
+                    connection.obj2Tan
+                  )
+              );
 
               Matter.Body.applyForce(
                 bodies[objToApply],
                 Matter.Vertices.centre(bodies[objToApply].vertices),
-                tension
+                createVertex(0, -tension)
               );
+              console.log(bodies[objToApply].force);
+              console.log(bodies[objToApply].velocity);
             }
           }
         }
@@ -134,8 +151,6 @@ function animate(timeRan) {
 //Initial Animate Start
 animate();
 
-
-
 // function calculateTension(c, bodies) {
 //   var accleration =
 //     0.00098 *
@@ -155,12 +170,14 @@ animate();
 //   return tension;
 // }
 
-function calculateTension(c, bodies){
+function calculateTension(c, bodies) {
   // console.log(bodies[c.obj1])
   // console.log(bodies[c.obj2])
-  var tension = 2 * 0.00098 * bodies[c.obj1].mass * bodies[c.obj2].mass / (bodies[c.obj1].mass + bodies[c.obj2].mass)
-  // console.log(tension)
-  return tension
+  var tension =
+    (2 * 0.00098 * bodies[c.obj1].mass * bodies[c.obj2].mass) /
+    (bodies[c.obj1].mass + bodies[c.obj2].mass);
+
+  return tension;
 }
 
 /*
@@ -298,17 +315,16 @@ function createCircle(radius, mass, type) {
     var newRadius = determineMass(mass);
     // circleRadius = newRadius;
     var circle = Matter.Bodies.circle(50, 50, newRadius);
-    var obj = createObject(circle.vertices)
-    obj.mass = mass
+    var obj = createObject(circle.vertices);
+    obj.mass = mass;
     objects.push(obj);
-  }
-  else {
+  } else {
     var circle = Matter.Bodies.circle(50, 50, radius);
     objects.push(createObject(circle.vertices));
   }
 }
 
-function determineMass(mass){
+function determineMass(mass) {
   var radiusDefault = 15;
   return radiusDefault * mass;
 }
@@ -376,17 +392,18 @@ function runSim() {
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        friction: 0.05,
+        friction: 1,
         restitution: 0,
         mass: 10,
         isStatic: false,
         velocity: { x: 0, y: 0 }
       });
       // console.log(obj.mass)
-      if(i == 3){
-        Matter.Body.setMass(obj, 5)
+      if (i == 3) {
+        Matter.Body.setMass(obj, 5);
       }
-      if(objects[i].hasOwnProperty('mass')){
+      if (objects[i].hasOwnProperty("mass")) {
+        console.log("collision");
         // console.log(objects[i].mass)
         // Matter.Body.setMass(obj, objects[i].mass)
       }
@@ -399,14 +416,17 @@ function runSim() {
   engine = e;
   usePhysics = true;
 
-  Matter.Events.on(engine, 'collisionStart', function(event){
-    var e = event.pairs
-    for(i = 0; i < e.length; i ++){
-      console.log(e)
-      Matter.Body.setStatic(e[i].bodyA, "true")
-      Matter.Body.setStatic(e[i].bodyB, "true")
-    }
-  })
+  Matter.Events.on(engine, "collisionStart", function(event) {
+    var e = event.pairs;
+    console.log(
+      "collision" + e[0].bodyA.velocity.x + " " + e[0].bodyB.velocity.x
+    );
+    // for (i = 0; i < e.length; i++) {
+    //   console.log(e);
+    //   Matter.Body.setStatic(e[i].bodyA, "true");
+    //   Matter.Body.setStatic(e[i].bodyB, "true");
+    // }
+  });
 
   //Create a Renderer. The Canvas is the main renderer this renderer is being used for debugging purposes and will be removed before final release
   // var render = Matter.Render.create({
