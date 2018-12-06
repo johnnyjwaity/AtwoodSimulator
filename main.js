@@ -51,13 +51,6 @@ function animate(timeRan) {
       // console.log("Previous Pos: " + previousPos);
       if (i > 2) {
         if (bodies[i].position.y < bodies[5].position.y) {
-          // abovePulley = true;
-          // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
-          // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
-          // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
-          // Matter.Vertices.centre(bodies[i].vertices),
-          // createVertex(0, -0.01 * bodies[i].mass);
-          // Matter.setStatic("true");
           // Matter.Body.setStatic(bodies[i], "true");
           // Matter.Body.setStatic(bodies[i - 1], "true");
           // console.log("POSITION: " + bodies[i].position.y);
@@ -70,13 +63,6 @@ function animate(timeRan) {
             )
         ) {
           // abovePulley = true;
-          // Matter.Body.setMass(bodies[i].setMass(bodies[i].mass*10));
-          // Matter.Body.applyForce(bodies[i], Matter.Vertices.centre(bodies[i].vertices), createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force));
-          // createVertex(Math.cos(Math.PI / 2) * force, Math.sin(Math.PI / 2) * force)
-          // Matter.Vertices.centre(bodies[i].vertices),
-          // createVertex(0, -0.01 * bodies[i].mass);
-          // Matter.setStatic("true");
-          // console.log("TEST: " + i);
           // Matter.Body.setStatic(bodies[i], "true");
           // Matter.Body.setStatic(bodies[i + 1], "true");
         }
@@ -94,34 +80,26 @@ function animate(timeRan) {
                 -bodies[objToApply].position.y + tanPoint.y,
                 -bodies[objToApply].position.x + tanPoint.x
               );
-              // console.log([
-              //   tensionAngle * (180 / Math.PI),
-              //   bodies[objToApply].mass
-              // ]);
               var tension = calculateTension(connection, bodies);
-              // tension = createVertex(
-              //   tension * Math.cos(tensionAngle),
-              //   -tension
-              // );
-              // console.log(tension)
-              console.log(
-                vertexDistance(
-                  bodies[connection.obj1].position,
-                  connection.obj1Tan
-                ) +
-                  vertexDistance(
-                    bodies[connection.obj2].position,
-                    connection.obj2Tan
-                  )
-              );
 
-              Matter.Body.applyForce(
-                bodies[objToApply],
-                Matter.Vertices.centre(bodies[objToApply].vertices),
-                createVertex(0, -tension)
-              );
-              console.log(bodies[objToApply].force);
-              console.log(bodies[objToApply].velocity);
+              if(connection.ropeLength == NaN || connection.ropeLength == undefined){
+                connection.ropeLength = calcualteRopeLength(connection, bodies)
+              }
+              
+              var ropeDifference = Math.abs(connection.ropeLength - calcualteRopeLength(connection, bodies))
+              console.log(ropeDifference)
+              if(ropeDifference < 1){
+                Matter.Body.applyForce(
+                  bodies[objToApply],
+                  Matter.Vertices.centre(bodies[objToApply].vertices),
+                  createVertex(0, -tension)
+                );
+              }else if(calcualteRopeLength(connection, bodies) > connection.ropeLength){
+                bodies[objToApply].force = createVertex(0, 0)
+                bodies[objToApply].velocity = createVertex(0, 0)
+              }
+
+              
             }
           }
         }
@@ -265,6 +243,7 @@ function drawTangentalLine(obj, pulley, connection) {
         connection.lastObj2Tan = connection.obj2Tan;
         connection.obj2Tan = createVertex(tangents[i * 2], tangents[1 + i * 2]);
       }
+      
       ctx.strokeStyle = "#FF0000";
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -273,6 +252,14 @@ function drawTangentalLine(obj, pulley, connection) {
       ctx.stroke();
     }
   }
+}
+
+function calcualteRopeLength(connection, objects){
+  // console.log(connection)
+  var center1 = Matter.Vertices.centre(objects[connection.obj1].vertices)
+  var center2 = Matter.Vertices.centre(objects[connection.obj2].vertices)
+  var dist = vertexDistance(center1, connection.obj1Tan) + vertexDistance(center2, connection.obj2Tan)
+  return dist
 }
 
 /*
