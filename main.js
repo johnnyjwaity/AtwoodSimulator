@@ -82,24 +82,28 @@ function animate(timeRan) {
               );
               var tension = calculateTension(connection, bodies);
 
-              if(connection.ropeLength == NaN || connection.ropeLength == undefined){
-                connection.ropeLength = calcualteRopeLength(connection, bodies)
+              if (
+                connection.ropeLength == NaN ||
+                connection.ropeLength == undefined
+              ) {
+                connection.ropeLength = calcualteRopeLength(connection, bodies);
               }
-              
-              var ropeDifference = Math.abs(connection.ropeLength - calcualteRopeLength(connection, bodies))
-              console.log(ropeDifference)
-              if(ropeDifference < 1){
+
+              var ropeDifference = Math.abs(
+                connection.ropeLength - calcualteRopeLength(connection, bodies)
+              );
+              console.log(ropeDifference);
+              if (ropeDifference < 5) {
                 Matter.Body.applyForce(
                   bodies[objToApply],
                   Matter.Vertices.centre(bodies[objToApply].vertices),
                   createVertex(0, -tension)
                 );
-              }else if(calcualteRopeLength(connection, bodies) > connection.ropeLength){
-                bodies[objToApply].force = createVertex(0, 0)
-                bodies[objToApply].velocity = createVertex(0, 0)
+              } else if (
+                calcualteRopeLength(connection, bodies) > connection.ropeLength
+              ) {
+                Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
               }
-
-              
             }
           }
         }
@@ -243,7 +247,7 @@ function drawTangentalLine(obj, pulley, connection) {
         connection.lastObj2Tan = connection.obj2Tan;
         connection.obj2Tan = createVertex(tangents[i * 2], tangents[1 + i * 2]);
       }
-      
+
       ctx.strokeStyle = "#FF0000";
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -254,12 +258,14 @@ function drawTangentalLine(obj, pulley, connection) {
   }
 }
 
-function calcualteRopeLength(connection, objects){
+function calcualteRopeLength(connection, objects) {
   // console.log(connection)
-  var center1 = Matter.Vertices.centre(objects[connection.obj1].vertices)
-  var center2 = Matter.Vertices.centre(objects[connection.obj2].vertices)
-  var dist = vertexDistance(center1, connection.obj1Tan) + vertexDistance(center2, connection.obj2Tan)
-  return dist
+  var center1 = Matter.Vertices.centre(objects[connection.obj1].vertices);
+  var center2 = Matter.Vertices.centre(objects[connection.obj2].vertices);
+  var dist =
+    vertexDistance(center1, connection.obj1Tan) +
+    vertexDistance(center2, connection.obj2Tan);
+  return dist;
 }
 
 /*
@@ -476,6 +482,7 @@ document.getElementById("window").addEventListener("mousemove", function(e) {
       }
 
       rotate(dragIndex);
+      snapToTangent(dragIndex, e.pageX);
     }
     //update last psoition
     lastPosition = createVertex(e.pageX, e.pageY);
@@ -575,6 +582,41 @@ function objDistance(obj1, obj2) {
 }
 function vertexDistance(v1, v2) {
   return Math.sqrt(Math.pow(v2.x - v1.x, 2) + Math.pow(v2.y - v1.y, 2));
+}
+
+function snapToTangent(index, mouseX) {
+  for (i = 0; i < objects.length; i++) {
+    if (i == index) {
+      continue;
+    }
+    if (objects[i].vertices.length > 4) {
+      //Is Circle
+      var cirlceCenter = Matter.Vertices.centre(objects[i].vertices);
+      var radius = vertexDistance(cirlceCenter, objects[i].vertices[0]);
+      var tanPoints = [
+        createVertex(cirlceCenter.x - radius, cirlceCenter.y),
+        createVertex(cirlceCenter.x + radius, cirlceCenter.y)
+      ];
+
+      var center = Matter.Vertices.centre(objects[index].vertices);
+      var tanX = tanPoints[0].x;
+      if (Math.abs(tanPoints[1].x - center.x) < Math.abs(tanX - center.x)) {
+        tanX = tanPoints[1].x;
+      }
+      if (Math.abs(mouseX - tanX) < 35) {
+        var xTranslation = tanX - center.x;
+        for (v = 0; v < objects[index].vertices.length; v++) {
+          objects[index].vertices[v].x += xTranslation;
+        }
+        var ctx = document.getElementById("window").getContext("2d");
+        ctx.beginPath();
+        ctx.moveTo(tanX, 0);
+        ctx.lineTo(tanX, 800);
+        ctx.strokeStyle = "#00FFFF";
+        ctx.stroke();
+      }
+    }
+  }
 }
 
 //End Drag
