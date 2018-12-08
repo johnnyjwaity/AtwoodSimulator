@@ -75,14 +75,16 @@ function animate(timeRan) {
             connection.ropeLength - calcualteRopeLength(connection, bodies)
           );
           // console.log(calcualteRopeLength(connection, bodies));
-          if (ropeDifference < 0.01) {
+          if (ropeDifference > -1) {
             Matter.Body.applyForce(
               bodies[objToApply],
               Matter.Vertices.centre(bodies[objToApply].vertices),
-              createVertex(0, -tension)
+              createVertex(
+                tension * Math.cos(tensionAngle),
+                -tension * Math.sin(tensionAngle)
+              )
             );
           } else if (
-            
             calcualteRopeLength(connection, bodies) > connection.ropeLength
           ) {
             Matter.Body.applyForce(
@@ -92,7 +94,6 @@ function animate(timeRan) {
             );
             Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
           }
-            
         }
       }
       objects.push(createObject(bodies[i].vertices));
@@ -296,10 +297,15 @@ function determineMass(mass) {
   An object that contains array of vertices
 */
 function createObject(vertices, objType) {
-  if (objType == "floor"){
+  if (objType == "floor") {
     console.log("objType::" + objType);
   }
-  return { vertices: vertices, rotation: 0, type: objType, properties: {mass: 1, isStatic: false} };
+  return {
+    vertices: vertices,
+    rotation: 0,
+    type: objType,
+    properties: { mass: 1, isStatic: false }
+  };
 }
 
 /*
@@ -327,7 +333,7 @@ function createVertex(x, y) {
   the physics engine to simulate them
 */
 function runSim() {
-  console.log(objects)
+  console.log(objects);
   //Create a new Physics Engine
   var e = Matter.Engine.create();
   e.world.gravity.y = 0; //0.98;
@@ -335,12 +341,18 @@ function runSim() {
     //Create a physics body from the vertices
     // if (i < 3 || i == 5) {
     console.log(objects[i].type);
-    if (objects[i].type == "floor" || objects[i].type == "leftWall" || objects[i].type == "rightWall" || objects[i].type == "pulley" || objects[i].type == "ramp"){
+    if (
+      objects[i].type == "floor" ||
+      objects[i].type == "leftWall" ||
+      objects[i].type == "rightWall" ||
+      objects[i].type == "pulley" ||
+      objects[i].type == "ramp"
+    ) {
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        friction: 1,
+        friction: 0,
         restitution: 0,
         isStatic: true,
         velocity: { x: 0, y: 0 }
@@ -352,7 +364,7 @@ function runSim() {
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
         frictionAir: 0,
-        friction: 1,
+        friction: 0,
         restitution: 0,
         mass: 10,
         isStatic: false,
@@ -388,13 +400,13 @@ function runSim() {
   var c3 = 2;
 
   for (i = 0; i < objects.length; i++) {
-    if (objects[i].type == "obj1"){
+    if (objects[i].type == "obj1") {
       c1 = i;
     }
-    if (objects[i].type == "obj2"){
+    if (objects[i].type == "obj2") {
       c2 = i;
     }
-    if (objects[i].type == "pulley"){
+    if (objects[i].type == "pulley") {
       c3 = i;
     }
   }
@@ -672,3 +684,63 @@ function intersection(x0, y0, r0, x1, y1, r1) {
 
   return [xi, yi, xi_prime, yi_prime];
 }
+
+("use strict");
+
+const e = React.createElement;
+
+class InputField extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    var title = e(
+      "p",
+      { style: { display: "inline-block", width: "75px" } },
+      this.props.name + ": "
+    );
+    var input = e(
+      "input",
+      {
+        type: "text",
+        placeholder: "Value",
+        style: {
+          height: "30px",
+          marginTop: "8px"
+        }
+      },
+      null
+    );
+
+    return e(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "max-content min-content",
+          gridGap: "5px",
+          marginTop: "10px",
+          height: "50px"
+        }
+      },
+      title,
+      input
+    );
+  }
+}
+class Menu extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return e(
+      "div",
+      { style: { width: "300px" } },
+      e(InputField, { name: "mass" }),
+      e(InputField, { name: "static" })
+    );
+  }
+}
+
+const domConatiner = document.querySelector("#optionDisplay");
+ReactDOM.render(e(Menu), domConatiner);

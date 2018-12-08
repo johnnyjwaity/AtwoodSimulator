@@ -2,6 +2,14 @@
 <html>
   <head>
     <title>Atwood Simulator</title>
+    <script
+      src="https://unpkg.com/react@16/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+      crossorigin
+    ></script>
     <script type="text/javascript" src="matter.js"></script>
     <link rel="stylesheet" href="main.css" type="text/css" />
   </head>
@@ -12,7 +20,9 @@
     <button onclick="objects.push(createRect(5, 5, 100, 100))">
       Create Box
     </button>
-    <button onclick="createCircle(15, 2.5, 'circleObject')">Create Circle</button>
+    <button onclick="createCircle(15, 2.5, 'circleObject')">
+      Create Circle
+    </button>
     <button onclick="objects.push(createRect(0, 750, 1000, 50))">
       Create Floor
     </button>
@@ -32,6 +42,7 @@
     <!--
       <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
     -->
+    <div id="optionDisplay"></div>
     <script type="text/javascript" src="main.js"></script>
   </body>
 </html>
