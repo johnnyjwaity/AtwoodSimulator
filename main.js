@@ -74,7 +74,7 @@ function animate(timeRan) {
           var ropeDifference = Math.abs(
             connection.ropeLength - calcualteRopeLength(connection, bodies)
           );
-          console.log(calcualteRopeLength(connection, bodies));
+          // console.log(calcualteRopeLength(connection, bodies));
           if (ropeDifference < 0.01) {
             Matter.Body.applyForce(
               bodies[objToApply],
@@ -243,14 +243,14 @@ function calcualteRopeLength(connection, objects) {
   @return
   A body that contains vertices for the rectangle
 */
-function createRect(x, y, w, h) {
+function createRect(x, y, w, h, type) {
   var vertices = [
     createVertex(x, y),
     createVertex(x + w, y),
     createVertex(x + w, y + h),
     createVertex(x, y + h)
   ];
-  return createObject(vertices);
+  return createObject(vertices, type);
 }
 
 function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
@@ -264,18 +264,18 @@ function createPolygon(x1, x2, x3, x4, y1, y2, y3, y4) {
   ];
   return polygon;
 }
-function createCircle(radius, mass, type) {
+function createCircle(radius, objType, mass, type) {
   if (type === "circleObject") {
     // circleRadius = newRadius;
     var newRadius = determineMass(mass);
     // circleRadius = newRadius;
     var circle = Matter.Bodies.circle(50, 50, newRadius);
-    var obj = createObject(circle.vertices);
+    var obj = createObject(circle.vertices, objType);
 
     objects.push(obj);
   } else {
     var circle = Matter.Bodies.circle(50, 50, radius);
-    objects.push(createObject(circle.vertices));
+    objects.push(createObject(circle.vertices, objType));
   }
 }
 
@@ -295,8 +295,11 @@ function determineMass(mass) {
   @return
   An object that contains array of vertices
 */
-function createObject(vertices) {
-  return { vertices: vertices, rotation: 0, properties: {mass: 1, isStatic: false} };
+function createObject(vertices, objType) {
+  if (objType == "floor"){
+    console.log("objType::" + objType);
+  }
+  return { vertices: vertices, rotation: 0, type: objType, properties: {mass: 1, isStatic: false} };
 }
 
 /*
@@ -330,8 +333,9 @@ function runSim() {
   e.world.gravity.y = 0; //0.98;
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
-    if (i < 3 || i == 5) {
-      //makes ramp and floor static --- FOR PURPOSE OF PROTOTYPE: CLICK ON CREATE RAMP AND CREATE FLOOR FIRST, OR ELSE THE FLOOR AND RAMP WILL MOVE
+    // if (i < 3 || i == 5) {
+    console.log(objects[i].type);
+    if (objects[i].type == "floor" || objects[i].type == "leftWall" || objects[i].type == "rightWall" || objects[i].type == "pulley" || objects[i].type == "ramp"){
       var obj = Matter.Body.create({
         position: Matter.Vertices.centre(objects[i].vertices),
         vertices: objects[i].vertices,
@@ -379,11 +383,30 @@ function runSim() {
   //Run the Engine and the Renderer
   // Matter.Render.run(render);
 
+  var c1 = 0;
+  var c2 = 1;
+  var c3 = 2;
+
+  for (i = 0; i < objects.length; i++) {
+    if (objects[i].type == "obj1"){
+      c1 = i;
+    }
+    if (objects[i].type == "obj2"){
+      c2 = i;
+    }
+    if (objects[i].type == "pulley"){
+      c3 = i;
+    }
+  }
+
   connections.push(
-    createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
+    // createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
+    // createConnection(objects[c1], objects[c2], objects[c3])
+    createConnection(c1, c2, c3)
   );
 }
 function createConnection(obj1, obj2, pulley) {
+  // if (obj1.type == "obj1" && obj2.type == "obj2"){
   var c = {
     obj1: obj1,
     obj2: obj2,
@@ -392,6 +415,8 @@ function createConnection(obj1, obj2, pulley) {
     obj2Tan: null
   };
   return c;
+  // }
+  // return undefined;
 }
 
 //Start Drag
@@ -573,7 +598,7 @@ window.addEventListener(
     if (e.data == "close") {
       closeTriangleBuilder();
     } else {
-      var obj = createObject(e.data);
+      var obj = createObject(e.data, "ramp");
       objects.push(obj);
     }
   },
