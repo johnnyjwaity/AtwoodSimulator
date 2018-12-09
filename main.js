@@ -74,6 +74,12 @@ function animate(timeRan) {
           var ropeDifference = Math.abs(
             connection.ropeLength - calcualteRopeLength(connection, bodies)
           );
+
+          tension = calculateTension1(
+            connection,
+            bodies[connection.obj1],
+            bodies[connection.obj2]
+          );
           // console.log(calcualteRopeLength(connection, bodies));
           if (ropeDifference > -1) {
             Matter.Body.applyForce(
@@ -122,6 +128,28 @@ function calculateTension(c, bodies) {
     (2 * 0.00098 * bodies[c.obj1].mass * bodies[c.obj2].mass) /
     (bodies[c.obj1].mass + bodies[c.obj2].mass);
 
+  return tension;
+}
+function calculateTension1(c, body1, body2) {
+  var weight1 =
+    body1.mass *
+    0.00098 *
+    (Math.abs(c.obj1Tan.y - body1.position.y) /
+      vertexDistance(c.obj1Tan, body1.position));
+  var weight2 =
+    body2.mass *
+    0.00098 *
+    (Math.abs(c.obj2Tan.y - body2.position.y) /
+      vertexDistance(c.obj2Tan, body2.position));
+
+  var accelerationMagnitude =
+    Math.abs(weight1 - weight2) / (body1.mass + body2.mass);
+
+  if (weight1 > weight2) {
+    accelerationMagnitude *= -1;
+  }
+  var tension = accelerationMagnitude * body1.mass + weight1;
+  console.log("Tension: " + tension);
   return tension;
 }
 
@@ -733,12 +761,10 @@ class Menu extends React.Component {
     super(props);
   }
   render() {
-    return e(
-      "div",
-      { style: { width: "300px" } },
+    return e("div", { style: { width: "300px" } }, [
       e(InputField, { name: "mass" }),
       e(InputField, { name: "static" })
-    );
+    ]);
   }
 }
 
