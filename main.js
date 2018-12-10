@@ -1,5 +1,6 @@
 var objects = [];
 var connections = [];
+var objectProperties = []
 var engine;
 var usePhysics = false;
 var lastTime = 0;
@@ -103,6 +104,7 @@ function animate(timeRan) {
           }
         }
       }
+      objectProperties[i].mass = bodies[i].mass
       objects.push(createObject(bodies[i].vertices));
     }
     for (i = 0; i < bodies.length; i++) {
@@ -367,6 +369,7 @@ function runSim() {
   //Create a new Physics Engine
   var e = Matter.Engine.create();
   e.world.gravity.y = 0; //0.98;
+  objectProperties = []
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
     // if (i < 3 || i == 5) {
@@ -424,7 +427,7 @@ function runSim() {
       isStatic: objects[i].properties.isStatic,
       mass: objects[i].properties.mass
     });
-
+    objectProperties.push({mass: obj.mass})
     // Add these bodies to the world
     Matter.World.add(e.world, [obj]);
   }
@@ -791,38 +794,104 @@ class InputField extends React.Component {
     );
   }
 }
+class InfoField extends React.Component {
+  constructor(props){
+    super(props)
+    this.state = {
+      index: props.index
+    }
+  }
+  render(){
+    var title = e(
+      "p",
+      { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
+      this.props.name
+    );
+    var value = e(
+      "p",
+      {
+        id: this.state.index,
+        style: {
+          height: "30px",
+          marginTop: "16px",
+          fontSize: "20px",
+          width: "200px"
+        }
+      },
+      objectProperties[this.state.index][this.props.name]
+    );
+
+    return e(
+      "div",
+      {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "max-content min-content",
+          gridGap: "5px",
+          height: "50px"
+        }
+      },
+      title,
+      value
+    );
+  }
+}
 class Menu extends React.Component {
   constructor(props) {
     super(props);
   }
   render() {
-    var inputFields = [];
+    if (this.props.mode == "edit"){
+      var inputFields = [];
+      var properties = this.props.object.properties;
+      var propertyKeys = Object.keys(properties);
+      for (var p = 0; p < propertyKeys.length; p++) {
+        var field = e(InputField, {
+          name: propertyKeys[p],
+          curVal: properties[propertyKeys[p]],
+          type: propertyTypes[propertyKeys[p]],
+          object: this.props.object,
+          key: p
+        });
+        inputFields.push(field);
+      }
 
-    var properties = this.props.object.properties;
-    var propertyKeys = Object.keys(properties);
-    for (var p = 0; p < propertyKeys.length; p++) {
-      var field = e(InputField, {
-        name: propertyKeys[p],
-        curVal: properties[propertyKeys[p]],
-        type: propertyTypes[propertyKeys[p]],
-        object: this.props.object,
-        key: p
-      });
-      inputFields.push(field);
+      return e(
+        "div",
+        { style: { width: "300px", backgroundColor: "gray" } },
+        inputFields
+      );
+    }else{
+      var valueFields = []
+      var properties = objectProperties[this.props.index]
+      var propertyKeys = Object.keys(properties);
+      for (var p = 0; p < propertyKeys.length; p++) {
+        var field = e(InfoField, {
+          index: this.props.index,
+          name: propertyKeys[p],
+          key: p
+        });
+        valueFields.push(field);
+      }
+
+      return e(
+        "div",
+        { style: { width: "300px", backgroundColor: "gray" } },
+        valueFields
+      );
     }
-
-    return e(
-      "div",
-      { style: { width: "300px", backgroundColor: "gray" } },
-      inputFields
-    );
+    
   }
 }
 
 const domConatiner = document.querySelector("#optionDisplay");
 function renderUI(object) {
   ReactDOM.unmountComponentAtNode(domConatiner);
-  ReactDOM.render(e(Menu, { object: object }), domConatiner);
+  ReactDOM.render(e(Menu, { object: object, mode: "edit" }), domConatiner);
+}
+function renderDisplayUI(object, index){
+  ReactDOM.unmountComponentAtNode(domConatiner);
+  ReactDOM.render(e(Menu, { object: object, mode: "view", index: index }), domConatiner);
 }
 
 document.getElementById("window").addEventListener("click", function(e) {
@@ -830,7 +899,11 @@ document.getElementById("window").addEventListener("click", function(e) {
   for (i = 0; i < objects.length; i++) {
     //Check if pointer was inside an object when clicked.
     if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
-      renderUI(objects[i]);
+      if(usePhysics){
+        renderDisplayUI(objects[i], i)
+      }else{
+        renderUI(objects[i], i)
+      }
       break;
     }
   }
