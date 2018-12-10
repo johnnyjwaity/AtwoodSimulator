@@ -44,11 +44,11 @@ function animate(timeRan) {
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
       previousPos = bodies[i].position.y;
       if (abovePulley != true) {
-        Matter.Body.applyForce(
-          bodies[i],
-          Matter.Vertices.centre(bodies[i].vertices),
-          createVertex(0, 0.00098 * bodies[i].mass)
-        );
+        // Matter.Body.applyForce(
+        //   bodies[i],
+        //   Matter.Vertices.centre(bodies[i].vertices),
+        //   createVertex(0, 0.00098 * bodies[i].mass)
+        // );
       }
       // console.log("Previous Pos: " + previousPos);
       for (c = 0; c < connections.length; c++) {
@@ -82,26 +82,40 @@ function animate(timeRan) {
             bodies[connection.obj1],
             bodies[connection.obj2]
           );
-          // console.log(calcualteRopeLength(connection, bodies));
-          if (ropeDifference > -1) {
-            Matter.Body.applyForce(
-              bodies[objToApply],
-              Matter.Vertices.centre(bodies[objToApply].vertices),
-              createVertex(
-                tension * Math.cos(tensionAngle),
-                -tension * Math.sin(tensionAngle)
-              )
-            );
-          } else if (
-            calcualteRopeLength(connection, bodies) > connection.ropeLength
-          ) {
-            Matter.Body.applyForce(
-              bodies[objToApply],
-              Matter.Vertices.centre(bodies[objToApply].vertices),
-              createVertex(0, -0.00098 * bodies[objToApply].mass)
-            );
-            Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
+          tension *= bodies[objToApply].mass
+          var otherMass;
+          if(connection.obj1 != objToApply){
+            otherMass = bodies[connection.obj1].mass
+          }else{
+            otherMass = bodies[connection.obj2].mass
           }
+          if(otherMass > bodies[objToApply].mass){
+            tension *= -1
+          }
+          Matter.Body.applyForce(bodies[objToApply], 
+            Matter.Vertices.centre(bodies[objToApply].vertices), 
+            createVertex(tension * Math.cos(tensionAngle), tension * Math.sin(tensionAngle))
+          );
+          // console.log(calcualteRopeLength(connection, bodies));
+          // if (ropeDifference > -1) {
+          //   Matter.Body.applyForce(
+          //     bodies[objToApply],
+          //     Matter.Vertices.centre(bodies[objToApply].vertices),
+          //     createVertex(
+          //       tension * Math.cos(tensionAngle),
+          //       -tension * Math.sin(tensionAngle)
+          //     )
+          //   );
+          // } else if (
+          //   calcualteRopeLength(connection, bodies) > connection.ropeLength
+          // ) {
+          //   Matter.Body.applyForce(
+          //     bodies[objToApply],
+          //     Matter.Vertices.centre(bodies[objToApply].vertices),
+          //     createVertex(0, -0.00098 * bodies[objToApply].mass)
+          //   );
+          //   Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
+          // }
         }
       }
       objectProperties[i].mass = bodies[i].mass
@@ -146,15 +160,22 @@ function calculateTension1(c, body1, body2) {
     (Math.abs(c.obj2Tan.y - body2.position.y) /
       vertexDistance(c.obj2Tan, body2.position));
   console.log(weight1 + " " + weight2);
+  // var friction1 = body1.mass * 0.00098 * (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position)) * 10
+  // var friction2 = body2.mass * 0.00098 * (Math.abs(c.obj2Tan.x - body2.position.x) / vertexDistance(c.obj2Tan, body2.position)) * 10
   var accelerationMagnitude =
     Math.abs(weight1 - weight2) / (body1.mass + body2.mass);
-  console.log("A: " + accelerationMagnitude);
-  if (weight1 > weight2) {
-    accelerationMagnitude *= -1;
-  }
-  var tension = accelerationMagnitude * body1.mass + weight1;
-  console.log("Tension: " + tension);
-  return tension;
+  return accelerationMagnitude
+  
+  // if(Math.abs(weight1 - weight2) < friction1 + friction2){
+  //   accelerationMagnitude = 0;
+  // }
+  // console.log("A: " + accelerationMagnitude);
+  // if (weight1 > weight2) {
+  //   accelerationMagnitude *= -1;
+  // }
+  // var tension = accelerationMagnitude * body1.mass + weight1;
+  // console.log("Tension: " + tension);
+  // return tension;
 }
 
 /*
