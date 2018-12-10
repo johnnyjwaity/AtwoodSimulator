@@ -16,7 +16,11 @@
   <body>
     <h1>Atwood Machine Simulator</h1>
     <section id="matter-window"></section>
-    <canvas id="window" width="1000" height="800"></canvas>
+    <section style="display: flex">
+      <canvas id="window" width="1000" height="800"></canvas>
+      <div id="optionDisplay"></div>
+    </section>
+
     <button onclick="objects.push(createRect(5, 5, 100, 100))">
       Create Box
     </button>
@@ -42,7 +46,7 @@
     <!--
       <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
     -->
-    <div id="optionDisplay"></div>
+
     <script type="text/javascript" src="main.js"></script>
   </body>
 </html>

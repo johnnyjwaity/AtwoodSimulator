@@ -6,6 +6,7 @@ var lastTime = 0;
 var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
+const propertyTypes = { mass: "number", isStatic: "checkbox" };
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -131,6 +132,7 @@ function calculateTension(c, bodies) {
   return tension;
 }
 function calculateTension1(c, body1, body2) {
+  console.log(body1.mass + " " + body2.mass);
   var weight1 =
     body1.mass *
     0.00098 *
@@ -141,10 +143,10 @@ function calculateTension1(c, body1, body2) {
     0.00098 *
     (Math.abs(c.obj2Tan.y - body2.position.y) /
       vertexDistance(c.obj2Tan, body2.position));
-
+  console.log(weight1 + " " + weight2);
   var accelerationMagnitude =
     Math.abs(weight1 - weight2) / (body1.mass + body2.mass);
-
+  console.log("A: " + accelerationMagnitude);
   if (weight1 > weight2) {
     accelerationMagnitude *= -1;
   }
@@ -369,44 +371,62 @@ function runSim() {
     //Create a physics body from the vertices
     // if (i < 3 || i == 5) {
     console.log(objects[i].type);
-    if (
-      objects[i].type == "floor" ||
-      objects[i].type == "leftWall" ||
-      objects[i].type == "rightWall" ||
-      objects[i].type == "pulley" ||
-      objects[i].type == "ramp"
-    ) {
-      var obj = Matter.Body.create({
-        position: Matter.Vertices.centre(objects[i].vertices),
-        vertices: objects[i].vertices,
-        frictionAir: 0,
-        friction: 0,
-        restitution: 0,
-        isStatic: true,
-        velocity: { x: 0, y: 0 }
-      });
-      //Add these bodies to the world
-      Matter.World.add(e.world, [obj]);
-    } else {
-      var obj = Matter.Body.create({
-        position: Matter.Vertices.centre(objects[i].vertices),
-        vertices: objects[i].vertices,
-        frictionAir: 0,
-        friction: 0,
-        restitution: 0,
-        mass: 10,
-        isStatic: false,
-        velocity: { x: 0, y: 0 },
-        inertia: Infinity
-      });
-      // console.log(obj.mass)
-      if (i == 3) {
-        Matter.Body.setMass(obj, 5);
-      }
-      // console.log(obj.position);
-      //Add these bodies to the world
-      Matter.World.add(e.world, [obj]);
-    }
+    // if (
+    //   objects[i].type == "floor" ||
+    //   objects[i].type == "leftWall" ||
+    //   objects[i].type == "rightWall" ||
+    //   objects[i].type == "pulley" ||
+    //   objects[i].type == "ramp"
+    // ) {
+    //   var obj = Matter.Body.create({
+    //     position: Matter.Vertices.centre(objects[i].vertices),
+    //     vertices: objects[i].vertices,
+    //     frictionAir: 0,
+    //     friction: 0,
+    //     restitution: 0,
+    //     isStatic: true,
+    //     velocity: { x: 0, y: 0 }
+    //   });
+    //   //Add these bodies to the world
+    //   Matter.World.add(e.world, [obj]);
+    // } else {
+    //   var obj = Matter.Body.create({
+    //     position: Matter.Vertices.centre(objects[i].vertices),
+    //     vertices: objects[i].vertices,
+    //     frictionAir: 0,
+    //     friction: 0,
+    //     restitution: 0,
+    //     mass: 10,
+    //     isStatic: false,
+    //     velocity: { x: 0, y: 0 },
+    //     inertia: Infinity
+    //   });
+    //   // console.log(obj.mass)
+    //   // console.log(objects[i].properties.mass);
+    //   // Matter.Body.setMass(obj, objects[i].properties.mass);
+    //   if (i == 3) {
+    //     Matter.Body.setMass(obj, 5);
+    //   }
+    //   // console.log(obj.position);
+    //   //Add these bodies to the world
+    //   console.log("1");
+    //   console.log(obj);
+    //   Matter.World.add(e.world, [obj]);
+    // }
+    var obj = Matter.Body.create({
+      position: Matter.Vertices.centre(objects[i].vertices),
+      vertices: objects[i].vertices,
+      frictionAir: 0,
+      friction: 0,
+      restitution: 0,
+      velocity: { x: 0, y: 0 },
+      inertia: Infinity,
+      isStatic: objects[i].properties.isStatic,
+      mass: objects[i].properties.mass
+    });
+
+    // Add these bodies to the world
+    Matter.World.add(e.world, [obj]);
   }
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
@@ -721,21 +741,37 @@ class InputField extends React.Component {
   constructor(props) {
     super(props);
   }
+  updateObject(element) {
+    var value = element.value;
+    if (element.type == "checkbox") {
+      value = element.checked;
+    } else if (element.type == "number") {
+      value = parseFloat(value);
+    }
+    this.props.object.properties[element.id] = value;
+  }
   render() {
     var title = e(
       "p",
-      { style: { display: "inline-block", width: "75px" } },
+      { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
       this.props.name + ": "
     );
     var input = e(
       "input",
       {
-        type: "text",
+        type: this.props.type,
         placeholder: "Value",
+        defaultValue: this.props.curVal,
+        defaultChecked: this.props.curVal,
+        id: this.props.name,
         style: {
           height: "30px",
-          marginTop: "8px"
-        }
+          marginTop: "16px",
+          fontSize: "20px",
+          width: "200px"
+        },
+        onChange: () =>
+          this.updateObject(document.querySelector("#" + this.props.name))
       },
       null
     );
@@ -747,7 +783,6 @@ class InputField extends React.Component {
           display: "grid",
           gridTemplateColumns: "max-content min-content",
           gridGap: "5px",
-          marginTop: "10px",
           height: "50px"
         }
       },
@@ -761,12 +796,42 @@ class Menu extends React.Component {
     super(props);
   }
   render() {
-    return e("div", { style: { width: "300px" } }, [
-      e(InputField, { name: "mass" }),
-      e(InputField, { name: "static" })
-    ]);
+    var inputFields = [];
+
+    var properties = this.props.object.properties;
+    var propertyKeys = Object.keys(properties);
+    for (var p = 0; p < propertyKeys.length; p++) {
+      var field = e(InputField, {
+        name: propertyKeys[p],
+        curVal: properties[propertyKeys[p]],
+        type: propertyTypes[propertyKeys[p]],
+        object: this.props.object,
+        key: p
+      });
+      inputFields.push(field);
+    }
+
+    return e(
+      "div",
+      { style: { width: "300px", backgroundColor: "gray" } },
+      inputFields
+    );
   }
 }
 
 const domConatiner = document.querySelector("#optionDisplay");
-ReactDOM.render(e(Menu), domConatiner);
+function renderUI(object) {
+  ReactDOM.unmountComponentAtNode(domConatiner);
+  ReactDOM.render(e(Menu, { object: object }), domConatiner);
+}
+
+document.getElementById("window").addEventListener("click", function(e) {
+  var canvasPoint = translatePointOnCanvas(createVertex(e.pageX, e.pageY));
+  for (i = 0; i < objects.length; i++) {
+    //Check if pointer was inside an object when clicked.
+    if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
+      renderUI(objects[i]);
+      break;
+    }
+  }
+});
