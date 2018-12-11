@@ -1,6 +1,5 @@
 var objects = [];
 var connections = [];
-var objectProperties = []
 var engine;
 var usePhysics = false;
 var lastTime = 0;
@@ -8,6 +7,7 @@ var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
 const propertyTypes = { mass: "number", isStatic: "checkbox" };
+var selectedObject;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -39,7 +39,7 @@ function animate(timeRan) {
     //Get all bodies from the Matter World
     var bodies = Matter.Composite.allBodies(engine.world);
     //Clear Objects
-    objects = [];
+    // objects = [];
     for (i = 0; i < bodies.length; i++) {
       //Remake All Objects from the Matter World bodies (So they will be updated with pysics)
       previousPos = bodies[i].position.y;
@@ -82,19 +82,24 @@ function animate(timeRan) {
             bodies[connection.obj1],
             bodies[connection.obj2]
           );
-          tension *= bodies[objToApply].mass
+          objects[objToApply].properties.mass += 1;
+          tension *= bodies[objToApply].mass;
           var otherMass;
-          if(connection.obj1 != objToApply){
-            otherMass = bodies[connection.obj1].mass
-          }else{
-            otherMass = bodies[connection.obj2].mass
+          if (connection.obj1 != objToApply) {
+            otherMass = bodies[connection.obj1].mass;
+          } else {
+            otherMass = bodies[connection.obj2].mass;
           }
-          if(otherMass > bodies[objToApply].mass){
-            tension *= -1
+          if (otherMass > bodies[objToApply].mass) {
+            tension *= -1;
           }
-          Matter.Body.applyForce(bodies[objToApply], 
-            Matter.Vertices.centre(bodies[objToApply].vertices), 
-            createVertex(tension * Math.cos(tensionAngle), tension * Math.sin(tensionAngle))
+          Matter.Body.applyForce(
+            bodies[objToApply],
+            Matter.Vertices.centre(bodies[objToApply].vertices),
+            createVertex(
+              tension * Math.cos(tensionAngle),
+              tension * Math.sin(tensionAngle)
+            )
           );
           // console.log(calcualteRopeLength(connection, bodies));
           // if (ropeDifference > -1) {
@@ -118,8 +123,7 @@ function animate(timeRan) {
           // }
         }
       }
-      objectProperties[i].mass = bodies[i].mass
-      objects.push(createObject(bodies[i].vertices));
+      objects[i].vertices = bodies[i].vertices;
     }
     for (i = 0; i < bodies.length; i++) {
       if (!bodies[i].isStatic && bodies[i].force.y > 0) {
@@ -127,7 +131,9 @@ function animate(timeRan) {
         // console.log({ force: bodies[i].force, mass: bodies[i].mass });
       }
     }
-
+    if (selectedObject != null || selectedObject != undefined) {
+      renderDisplayUI(selectedObject);
+    }
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
   }
@@ -164,8 +170,8 @@ function calculateTension1(c, body1, body2) {
   // var friction2 = body2.mass * 0.00098 * (Math.abs(c.obj2Tan.x - body2.position.x) / vertexDistance(c.obj2Tan, body2.position)) * 10
   var accelerationMagnitude =
     Math.abs(weight1 - weight2) / (body1.mass + body2.mass);
-  return accelerationMagnitude
-  
+  return accelerationMagnitude;
+
   // if(Math.abs(weight1 - weight2) < friction1 + friction2){
   //   accelerationMagnitude = 0;
   // }
@@ -390,7 +396,7 @@ function runSim() {
   //Create a new Physics Engine
   var e = Matter.Engine.create();
   e.world.gravity.y = 0; //0.98;
-  objectProperties = []
+  objectProperties = [];
   for (i = 0; i < objects.length; i++) {
     //Create a physics body from the vertices
     // if (i < 3 || i == 5) {
@@ -448,9 +454,9 @@ function runSim() {
       isStatic: objects[i].properties.isStatic,
       mass: objects[i].properties.mass
     });
-    objectProperties.push({mass: obj.mass})
     // Add these bodies to the world
     Matter.World.add(e.world, [obj]);
+    objects[i].properties.num = i;
   }
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
@@ -816,13 +822,13 @@ class InputField extends React.Component {
   }
 }
 class InfoField extends React.Component {
-  constructor(props){
-    super(props)
+  constructor(props) {
+    super(props);
     this.state = {
-      index: props.index
-    }
+      val: props.val
+    };
   }
-  render(){
+  render() {
     var title = e(
       "p",
       { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
@@ -831,7 +837,6 @@ class InfoField extends React.Component {
     var value = e(
       "p",
       {
-        id: this.state.index,
         style: {
           height: "30px",
           marginTop: "16px",
@@ -839,7 +844,7 @@ class InfoField extends React.Component {
           width: "200px"
         }
       },
-      objectProperties[this.state.index][this.props.name]
+      this.state.val
     );
 
     return e(
@@ -861,8 +866,9 @@ class Menu extends React.Component {
   constructor(props) {
     super(props);
   }
+  update() {}
   render() {
-    if (this.props.mode == "edit"){
+    if (this.props.mode == "edit") {
       var inputFields = [];
       var properties = this.props.object.properties;
       var propertyKeys = Object.keys(properties);
@@ -882,37 +888,41 @@ class Menu extends React.Component {
         { style: { width: "300px", backgroundColor: "gray" } },
         inputFields
       );
-    }else{
-      var valueFields = []
-      var properties = objectProperties[this.props.index]
+    } else {
+      var valueFields = [];
+      var properties = this.props.object.properties;
       var propertyKeys = Object.keys(properties);
       for (var p = 0; p < propertyKeys.length; p++) {
         var field = e(InfoField, {
-          index: this.props.index,
+          val: properties[propertyKeys[p]],
           name: propertyKeys[p],
           key: p
         });
         valueFields.push(field);
       }
-
+      // var self = this;
+      // setTimeout(function() {
+      //   self.setState({});
+      // }, 100);
       return e(
         "div",
         { style: { width: "300px", backgroundColor: "gray" } },
         valueFields
       );
     }
-    
   }
 }
 
 const domConatiner = document.querySelector("#optionDisplay");
 function renderUI(object) {
   ReactDOM.unmountComponentAtNode(domConatiner);
-  ReactDOM.render(e(Menu, { object: object, mode: "edit" }), domConatiner);
+  menu = e(Menu, { object: object, mode: "edit" });
+  ReactDOM.render(menu, domConatiner);
 }
-function renderDisplayUI(object, index){
+function renderDisplayUI(object) {
   ReactDOM.unmountComponentAtNode(domConatiner);
-  ReactDOM.render(e(Menu, { object: object, mode: "view", index: index }), domConatiner);
+  menu = e(Menu, { object: object, mode: "view" });
+  ReactDOM.render(menu, domConatiner);
 }
 
 document.getElementById("window").addEventListener("click", function(e) {
@@ -920,10 +930,11 @@ document.getElementById("window").addEventListener("click", function(e) {
   for (i = 0; i < objects.length; i++) {
     //Check if pointer was inside an object when clicked.
     if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
-      if(usePhysics){
-        renderDisplayUI(objects[i], i)
-      }else{
-        renderUI(objects[i], i)
+      if (usePhysics) {
+        selectedObject = objects[i];
+      } else {
+        renderUI(objects[i], i);
+        selectedObject = objects[i];
       }
       break;
     }
