@@ -578,6 +578,8 @@ function translatePointOnCanvas(vertex) {
   return createVertex(vertex.x - canvasX, vertex.y - canvasY);
 }
 
+
+
 function rotate(index) {
   if (objects[index].vertices.length == 4) {
     var closestRampIndex = -1;
@@ -596,7 +598,22 @@ function rotate(index) {
         }
       }
     }
-    if (distance != -1 && distance < 100) {
+    var objectCenter = Matter.Vertices.centre(objects[index].vertices)
+    var vertexDistances = []
+    for(v = 0; v < objects[closestRampIndex].vertices.length; v++){
+      vertexDistances.push(vertexDistance(objectCenter, objects[closestRampIndex].vertices[v]))
+    }
+    vertexDistances.push(distance)
+    var closestDistance = Math.min(...vertexDistances)
+
+    var rampCenter = Matter.Vertices.centre(objects[closestRampIndex].vertices)
+    var vD = []
+    for(v = 0; v < 3; v++){
+      vD.push(vertexDistance(rampCenter, objects[closestRampIndex].vertices[v]))
+    }
+    var threshold = Math.max(...vD)
+    console.log(threshold)
+    if (distance != -1 && closestDistance < threshold) {
       var closestVertices = [];
       var vertexDistances = [];
       var objCenter = Matter.Vertices.centre(objects[index].vertices);
