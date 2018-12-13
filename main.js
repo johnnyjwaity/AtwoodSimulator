@@ -7,6 +7,7 @@ var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
 const propertyTypes = { mass: "number", isStatic: "checkbox" };
+var units = {mass: "kg", acceleration: "m/s/s", velocity: "m/s"}
 var selectedObject;
 var lines = [];
 
@@ -84,13 +85,15 @@ function animate(timeRan) {
           var ropeDifference = Math.abs(
             connection.ropeLength - calcualteRopeLength(connection, bodies)
           );
-
+          // objects[objToApply].properties.mass += 1
           tension = calculateTension1(
             connection,
             bodies[connection.obj1],
             bodies[connection.obj2]
           );
-          objects[objToApply].properties.mass += 1;
+          objects[objToApply].properties.acceleration = Math.round(tension * 1000000) / 100
+          var velocity = createVertex(bodies[objToApply].velocity.x, bodies[objToApply].velocity.y).magnitude()
+          objects[objToApply].properties.velocity = Math.round(velocity * 100) / 100
           tension *= bodies[objToApply].mass;
           var otherMass;
           if (connection.obj1 != objToApply) {
@@ -131,6 +134,12 @@ function animate(timeRan) {
           //     createVertex(0, 0.00098 * bodies[objToApply].mass)
           //   );
           // }
+        }else{
+          Matter.Body.applyForce(
+            bodies[i],
+            Matter.Vertices.centre(bodies[i].vertices),
+            createVertex(0, 0.00098 * bodies[i].mass)
+          );
         }
       }
       objects[i].vertices = bodies[i].vertices;
@@ -142,7 +151,7 @@ function animate(timeRan) {
       }
     }
     if (selectedObject != null || selectedObject != undefined) {
-      renderDisplayUI(selectedObject);
+      // renderDisplayUI(selectedObject);
     }
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
@@ -164,37 +173,18 @@ function calculateTension(c, bodies) {
   return tension;
 }
 function calculateTension1(c, body1, body2) {
-  console.log(body1.mass + " " + body2.mass);
-  var weight1 = body1.mass * 0.00098 * Math.sin((30 * Math.PI) / 180);
-  var weight2 =
-    body2.mass *
-    0.00098 *
-    (Math.abs(c.obj2Tan.y - body2.position.y) /
-      vertexDistance(c.obj2Tan, body2.position));
-  console.log(weight1 + " " + weight2);
-  // var friction1 = body1.mass * 0.00098 * (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position)) * 0.2
-  // var friction2 = body2.mass * 0.00098 * (Math.abs(c.obj2Tan.x - body2.position.x) / vertexDistance(c.obj2Tan, body2.position)) * 0.2
-  var friction1 = body1.mass * 0.00098 * Math.cos((30 * Math.PI) / 180) * 0.2;
-  var friction2 =
-    body2.mass *
-    0.00098 *
-    (Math.abs(c.obj2Tan.x - body2.position.x) /
-      vertexDistance(c.obj2Tan, body2.position)) *
-    0.2;
+
+  var weight1 = body1.mass * 0.00098 * Math.sin(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)));
+  var weight2 = body2.mass * 0.00098 * Math.sin(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)));
+
+  var friction1 = 0//body1.mass * 0.00098 * Math.cos(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))) * 0.2;
+  var friction2 = 0//body2.mass * 0.00098 * Math.cos(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))) * 0.2;
   var accelerationMagnitude =
     (Math.abs(weight1 - weight2) - friction1 - friction2) /
     (body1.mass + body2.mass);
   if (accelerationMagnitude < 0) {
     accelerationMagnitude = 0;
   }
-  console.log(
-    "ANGLE: " +
-      Math.acos(
-        Math.abs(c.obj1Tan.x - body1.position.x) /
-          vertexDistance(c.obj1Tan, body1.position)
-      ) *
-        (180 / Math.PI)
-  );
   // console.log({weight1: weight1, weight2: weight2, fric1: friction1, fric2: friction2, a: accelerationMagnitude, cos: (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position))})
   return accelerationMagnitude;
 }
@@ -474,7 +464,6 @@ function runSim() {
     });
     // Add these bodies to the world
     Matter.World.add(e.world, [obj]);
-    objects[i].properties.num = i;
   }
   //Sets engine and usePhysics so teh canvas will now update woth physics changes
   engine = e;
@@ -512,6 +501,10 @@ function runSim() {
     // createConnection(objects[c1], objects[c2], objects[c3])
     createConnection(c1, c2, c3)
   );
+  if(selectedObject != null && selectedObject != undefined){
+    renderDisplayUI(selectedObject)
+  }
+  
 }
 function createConnection(obj1, obj2, pulley) {
   // if (obj1.type == "obj1" && obj2.type == "obj2"){
@@ -948,6 +941,7 @@ class InputField extends React.Component {
       input
     );
   }
+  
 }
 class InfoField extends React.Component {
   constructor(props) {
@@ -962,6 +956,10 @@ class InfoField extends React.Component {
       { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
       this.props.name
     );
+    var unit = ""
+    if(units[this.props.name] != undefined){
+      unit = units[this.props.name]
+    }
     var value = e(
       "p",
       {
@@ -969,10 +967,11 @@ class InfoField extends React.Component {
           height: "30px",
           marginTop: "16px",
           fontSize: "20px",
-          width: "200px"
+          width: "200px",
+          textAlign: 'right'
         }
       },
-      this.state.val
+      "" + this.state.val + " " + unit
     );
 
     return e(
@@ -988,6 +987,13 @@ class InfoField extends React.Component {
       title,
       value
     );
+  }
+
+  componentDidMount() {
+    this.interval = setInterval(() => this.setState({ val: this.props.object.properties[this.props.name] }), 16);
+  }
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 }
 class Menu extends React.Component {
@@ -1032,7 +1038,8 @@ class Menu extends React.Component {
         var field = e(InfoField, {
           val: properties[propertyKeys[p]],
           name: propertyKeys[p],
-          key: p
+          key: p,
+          object: this.props.object
         });
         valueFields.push(field);
       }
@@ -1042,7 +1049,13 @@ class Menu extends React.Component {
       // }, 100);
       return e(
         "div",
-        { style: { width: "300px", backgroundColor: "gray" } },
+        { style: {
+          width: "300px",
+          backgroundColor: "white",
+          border: "dashed",
+          marginLeft: "20px",
+          paddingLeft: "10px"
+        } },
         valueFields
       );
     }
@@ -1068,6 +1081,7 @@ document.getElementById("window").addEventListener("click", function(e) {
     if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
       if (usePhysics) {
         selectedObject = objects[i];
+        renderDisplayUI(selectedObject)
       } else {
         renderUI(objects[i], i);
         selectedObject = objects[i];
