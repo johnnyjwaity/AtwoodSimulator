@@ -101,6 +101,8 @@ function animate(timeRan) {
           if (otherMass > bodies[objToApply].mass) {
             tension *= -1;
           }
+
+          // console.log(calcualteRopeLength(connection, bodies));
           Matter.Body.applyForce(
             bodies[objToApply],
             Matter.Vertices.centre(bodies[objToApply].vertices),
@@ -109,16 +111,8 @@ function animate(timeRan) {
               tension * Math.sin(tensionAngle)
             )
           );
-          // console.log(calcualteRopeLength(connection, bodies));
-          // if (ropeDifference > -1) {
-          //   Matter.Body.applyForce(
-          //     bodies[objToApply],
-          //     Matter.Vertices.centre(bodies[objToApply].vertices),
-          //     createVertex(
-          //       tension * Math.cos(tensionAngle),
-          //       -tension * Math.sin(tensionAngle)
-          //     )
-          //   );
+          // if (ropeDifference < 1) {
+
           // } else if (
           //   calcualteRopeLength(connection, bodies) > connection.ropeLength
           // ) {
@@ -128,6 +122,14 @@ function animate(timeRan) {
           //     createVertex(0, -0.00098 * bodies[objToApply].mass)
           //   );
           //   Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
+          // } else if (
+          //   calcualteRopeLength(connection, bodies) < connection.ropeLength
+          // ) {
+          //   Matter.Body.applyForce(
+          //     bodies[objToApply],
+          //     Matter.Vertices.centre(bodies[objToApply].vertices),
+          //     createVertex(0, 0.00098 * bodies[objToApply].mass)
+          //   );
           // }
         }
       }
@@ -1011,7 +1013,15 @@ class Menu extends React.Component {
 
       return e(
         "div",
-        { style: { width: "300px", backgroundColor: "gray" } },
+        {
+          style: {
+            width: "300px",
+            backgroundColor: "white",
+            border: "dashed",
+            marginLeft: "20px",
+            paddingLeft: "10px"
+          }
+        },
         inputFields
       );
     } else {
