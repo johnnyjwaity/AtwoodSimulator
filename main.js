@@ -95,24 +95,46 @@ function animate(timeRan) {
           var velocity = createVertex(bodies[objToApply].velocity.x, bodies[objToApply].velocity.y).magnitude()
           objects[objToApply].properties.velocity = Math.round(velocity * 100) / 100
           tension *= bodies[objToApply].mass;
-          var otherMass;
+
+
+          var otherBody;
+          var otherTanPoint
+          var tanPoint;
           if (connection.obj1 != objToApply) {
-            otherMass = bodies[connection.obj1].mass;
+            otherBody = bodies[connection.obj1];
+            otherTanPoint = connection.obj1Tan
+            tanPoint = connection.obj2Tan
           } else {
-            otherMass = bodies[connection.obj2].mass;
-          }
-          if (otherMass > bodies[objToApply].mass) {
-            tension *= -1;
+            otherBody = bodies[connection.obj2];
+            otherTanPoint = connection.obj2Tan
+            tanPoint = connection.obj1Tan
           }
 
+          // if (otherMass > bodies[objToApply].mass) {
+          //   tension *= -1;
+          // }
+
+          var aDirection = createVertex(tanPoint.x - bodies[objToApply].position.x, tanPoint.y - bodies[objToApply].position.y)
+          var mag = aDirection.magnitude()
+          aDirection.x /= mag
+          aDirection.y /= mag
+          aDirection.x *= tension
+          aDirection.y *= tension
+
+          var weight = bodies[objToApply].mass * 0.00098 * Math.sin(Math.atan((bodies[objToApply].position.y - tanPoint.y) / (bodies[objToApply].position.x - tanPoint.x)));
+          var otherWeight = otherBody.mass * 0.00098 * Math.sin(Math.atan((otherBody.position.y - otherTanPoint.y) / (otherBody.position.x - otherTanPoint.x)));
+          console.log(weight)
+          console.log(otherWeight)
+
+          if(Math.abs(weight) < Math.abs(otherWeight)){
+            aDirection.x *= -1
+            aDirection.y *= -1
+          }
           // console.log(calcualteRopeLength(connection, bodies));
           Matter.Body.applyForce(
             bodies[objToApply],
             Matter.Vertices.centre(bodies[objToApply].vertices),
-            createVertex(
-              tension * Math.cos(tensionAngle),
-              tension * Math.sin(tensionAngle)
-            )
+            aDirection
           );
           // if (ropeDifference < 1) {
 
@@ -180,11 +202,11 @@ function calculateTension1(c, body1, body2) {
   var friction1 = 0//body1.mass * 0.00098 * Math.cos(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))) * 0.2;
   var friction2 = 0//body2.mass * 0.00098 * Math.cos(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))) * 0.2;
   var accelerationMagnitude =
-    (Math.abs(weight1 - weight2) - friction1 - friction2) /
+    (weight1 - weight2) /
     (body1.mass + body2.mass);
-  if (accelerationMagnitude < 0) {
-    accelerationMagnitude = 0;
-  }
+  // if (accelerationMagnitude < 0) {
+  //   accelerationMagnitude = 0;
+  // }
   // console.log({weight1: weight1, weight2: weight2, fric1: friction1, fric2: friction2, a: accelerationMagnitude, cos: (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position))})
   return accelerationMagnitude;
 }
