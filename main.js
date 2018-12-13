@@ -8,6 +8,7 @@ var abovePulley = false;
 var previousPos = -1;
 const propertyTypes = { mass: "number", isStatic: "checkbox" };
 var selectedObject;
+var lines = [];
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -18,6 +19,13 @@ function animate(timeRan) {
 
   //Draw all objects from their vertices onto the canvas
   drawObjects(ctx);
+
+  for (l = 0; l < lines.length; l++) {
+    ctx.beginPath();
+    ctx.moveTo(lines[l].start.x, lines[l].start.y);
+    ctx.lineTo(lines[l].end.x, lines[l].end.y);
+    ctx.stroke();
+  }
 
   var deltaTime = timeRan - lastTime;
   lastTime = timeRan;
@@ -155,10 +163,7 @@ function calculateTension(c, bodies) {
 }
 function calculateTension1(c, body1, body2) {
   console.log(body1.mass + " " + body2.mass);
-  var weight1 =
-    body1.mass *
-    0.00098 *
-    Math.sin(30 * Math.PI/180);
+  var weight1 = body1.mass * 0.00098 * Math.sin((30 * Math.PI) / 180);
   var weight2 =
     body2.mass *
     0.00098 *
@@ -167,14 +172,27 @@ function calculateTension1(c, body1, body2) {
   console.log(weight1 + " " + weight2);
   // var friction1 = body1.mass * 0.00098 * (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position)) * 0.2
   // var friction2 = body2.mass * 0.00098 * (Math.abs(c.obj2Tan.x - body2.position.x) / vertexDistance(c.obj2Tan, body2.position)) * 0.2
-  var friction1 = body1.mass * 0.00098 * Math.cos(30 * Math.PI/180) * 0.2
-  var friction2 = body2.mass * 0.00098 * (Math.abs(c.obj2Tan.x - body2.position.x) / vertexDistance(c.obj2Tan, body2.position)) * 0.2
+  var friction1 = body1.mass * 0.00098 * Math.cos((30 * Math.PI) / 180) * 0.2;
+  var friction2 =
+    body2.mass *
+    0.00098 *
+    (Math.abs(c.obj2Tan.x - body2.position.x) /
+      vertexDistance(c.obj2Tan, body2.position)) *
+    0.2;
   var accelerationMagnitude =
-    (Math.abs(weight1 - weight2) - friction1 - friction2) / (body1.mass + body2.mass);
-  if(accelerationMagnitude < 0){
-    accelerationMagnitude = 0
+    (Math.abs(weight1 - weight2) - friction1 - friction2) /
+    (body1.mass + body2.mass);
+  if (accelerationMagnitude < 0) {
+    accelerationMagnitude = 0;
   }
-  console.log("ANGLE: " + Math.acos(Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position)) * (180 / Math.PI))
+  console.log(
+    "ANGLE: " +
+      Math.acos(
+        Math.abs(c.obj1Tan.x - body1.position.x) /
+          vertexDistance(c.obj1Tan, body1.position)
+      ) *
+        (180 / Math.PI)
+  );
   // console.log({weight1: weight1, weight2: weight2, fric1: friction1, fric2: friction2, a: accelerationMagnitude, cos: (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position))})
   return accelerationMagnitude;
 }
@@ -201,6 +219,9 @@ function drawObjects(ctx) {
     //Fill in the shape with color
     ctx.fill();
   }
+}
+function calcSlope(v1, v2) {
+  return (v2.y - v1.y) / (v2.x - v1.x);
 }
 
 function drawTangentalLine(obj, pulley, connection) {
@@ -527,6 +548,7 @@ document.getElementById("window").addEventListener("mousedown", function(e) {
 document.getElementById("window").addEventListener("mousemove", function(e) {
   //Check if the mouse was down
   if (isDragging) {
+    lines = [];
     //Find change in x and y
     var deltaX = e.pageX - lastPosition.x;
     var deltaY = e.pageY - lastPosition.y;
@@ -539,6 +561,12 @@ document.getElementById("window").addEventListener("mousemove", function(e) {
 
       rotate(dragIndex);
       snapToTangent(dragIndex, e.pageX);
+      if (objects[dragIndex].vertices.length > 4) {
+        pulleySnap(
+          objects[dragIndex],
+          translatePointOnCanvas(createVertex(e.pageX, e.pageY))
+        );
+      }
     }
     //update last psoition
     lastPosition = createVertex(e.pageX, e.pageY);
@@ -549,6 +577,8 @@ document.getElementById("window").addEventListener("mouseup", function(e) {
   isDragging = false;
   //Make no object be selected
   dragIndex = -1;
+
+  lines = [];
 });
 
 /*
@@ -573,7 +603,83 @@ function translatePointOnCanvas(vertex) {
   return createVertex(vertex.x - canvasX, vertex.y - canvasY);
 }
 
+function pulleySnap(pulley, mouse) {
+  var closestRamp;
+  var distance = -1;
+  for (i = 0; i < objects.length; i++) {
+    if (objects[i].vertices.length == 3) {
+      if (distance == -1) {
+        closestRamp = objects[i];
+        distance = objDistance(pulley, objects[i]);
+      } else {
+        var d2 = objDistance(pulley, objects[i]);
+        if (d2 < distance) {
+          closestRamp = objects[i];
+          distance = d2;
+        }
+      }
+    }
+  }
+  if (closestRamp == null) {
+    return;
+  }
+  var pulleyCenter = Matter.Vertices.centre(pulley.vertices);
+  var radius = vertexDistance(pulleyCenter, pulley.vertices[0]);
 
+  var vertices = closestRamp.vertices;
+  var slopes = [
+    calcSlope(vertices[0], vertices[1]),
+    calcSlope(vertices[1], vertices[2]),
+    calcSlope(vertices[2], vertices[0])
+  ];
+  var slope;
+  var b;
+  for (s = 0; s < slopes.length; s++) {
+    if (
+      slopes[s] != 0 &&
+      slopes[s] != undefined &&
+      slopes[s] != -0 &&
+      slopes[s] != Infinity &&
+      slopes[s] != -Infinity
+    ) {
+      slope = slopes[s];
+      b = vertices[s].y - slope * vertices[s].x;
+    }
+  }
+  b -= 15 / Math.cos(Math.atan(slope));
+
+  var perpendicularSlope = -1 / slope;
+  var b2 = pulleyCenter.y - pulleyCenter.x * perpendicularSlope;
+
+  var intersectionX = (b2 - b) / (slope - perpendicularSlope);
+  var intersectionY = perpendicularSlope * intersectionX + b2;
+
+  var d = vertexDistance(
+    createVertex(intersectionX, intersectionY),
+    pulleyCenter
+  );
+  d -= radius;
+
+  var translation = createVertex(
+    d * Math.cos(Math.atan(perpendicularSlope)),
+    d * Math.sin(Math.atan(perpendicularSlope))
+  );
+  if (mouse.y > intersectionY) {
+    translation.x *= -1;
+    translation.y *= -1;
+  }
+  console.log(d);
+  if (vertexDistance(mouse, createVertex(intersectionX, intersectionY)) < 100) {
+    for (v = 0; v < pulley.vertices.length; v++) {
+      pulley.vertices[v].x += translation.x;
+      pulley.vertices[v].y += translation.y;
+    }
+    lines.push({
+      start: createVertex(0, b),
+      end: createVertex(1000, 1000 * slope + b)
+    });
+  }
+}
 
 function rotate(index) {
   if (objects[index].vertices.length == 4) {
@@ -595,23 +701,29 @@ function rotate(index) {
     }
     var closestDistance;
     var threshold;
-    if(distance != -1){
-      var objectCenter = Matter.Vertices.centre(objects[index].vertices)
-      var vertexDistances = []
-      for(v = 0; v < objects[closestRampIndex].vertices.length; v++){
-        vertexDistances.push(vertexDistance(objectCenter, objects[closestRampIndex].vertices[v]))
+    if (distance != -1) {
+      var objectCenter = Matter.Vertices.centre(objects[index].vertices);
+      var vertexDistances = [];
+      for (v = 0; v < objects[closestRampIndex].vertices.length; v++) {
+        vertexDistances.push(
+          vertexDistance(objectCenter, objects[closestRampIndex].vertices[v])
+        );
       }
-      vertexDistances.push(distance)
-      closestDistance = Math.min(...vertexDistances)
-  
-      var rampCenter = Matter.Vertices.centre(objects[closestRampIndex].vertices)
-      var vD = []
-      for(v = 0; v < 3; v++){
-        vD.push(vertexDistance(rampCenter, objects[closestRampIndex].vertices[v]))
+      vertexDistances.push(distance);
+      closestDistance = Math.min(...vertexDistances);
+
+      var rampCenter = Matter.Vertices.centre(
+        objects[closestRampIndex].vertices
+      );
+      var vD = [];
+      for (v = 0; v < 3; v++) {
+        vD.push(
+          vertexDistance(rampCenter, objects[closestRampIndex].vertices[v])
+        );
       }
-      threshold = Math.max(...vD)
+      threshold = Math.max(...vD);
     }
-    console.log(threshold)
+    console.log(threshold);
     if (distance != -1 && closestDistance < 100) {
       var closestVertices = [];
       var vertexDistances = [];
@@ -685,12 +797,10 @@ function snapToTangent(index, mouseX) {
         for (v = 0; v < objects[index].vertices.length; v++) {
           objects[index].vertices[v].x += xTranslation;
         }
-        var ctx = document.getElementById("window").getContext("2d");
-        ctx.beginPath();
-        ctx.moveTo(tanX, 0);
-        ctx.lineTo(tanX, 800);
-        ctx.strokeStyle = "#00FFFF";
-        ctx.stroke();
+        lines.push({
+          start: createVertex(tanX, 0),
+          end: createVertex(tanX, 800)
+        });
       }
     }
   }
