@@ -123,10 +123,10 @@ function animate(timeRan) {
 
           var weight = bodies[objToApply].mass * 0.00098 * Math.sin(Math.atan((bodies[objToApply].position.y - tanPoint.y) / (bodies[objToApply].position.x - tanPoint.x)));
           var otherWeight = otherBody.mass * 0.00098 * Math.sin(Math.atan((otherBody.position.y - otherTanPoint.y) / (otherBody.position.x - otherTanPoint.x)));
-          console.log(weight)
+          console.log("Weight: " + weight + " Other Weight: " + otherWeight + " Acceleration: " + tension)
           console.log(otherWeight)
 
-          if(Math.abs(weight) < Math.abs(otherWeight)){
+          if(Math.abs(weight) > Math.abs(otherWeight)){
             aDirection.x *= -1
             aDirection.y *= -1
           }
@@ -196,19 +196,23 @@ function calculateTension(c, bodies) {
 }
 function calculateTension1(c, body1, body2) {
 
-  var weight1 = body1.mass * 0.00098 * Math.sin(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)));
-  var weight2 = body2.mass * 0.00098 * Math.sin(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)));
-
-  var friction1 = 0//body1.mass * 0.00098 * Math.cos(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))) * 0.2;
-  var friction2 = 0//body2.mass * 0.00098 * Math.cos(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))) * 0.2;
+  var weight1 = Math.abs(body1.mass * 0.00098 * Math.sin(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))));
+  var weight2 = Math.abs(body2.mass * 0.00098 * Math.sin(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))));
+  console.log("Tension Weight: " + weight1 + " " + weight2)
+  //If Object GOING DOWN SUbtract friction
+  var friction1 = body1.mass * 0.00098 * Math.cos(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))) * 0.2;
+  var friction2 = body2.mass * 0.00098 * Math.cos(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))) * 0.2;
+  weight1 += friction1
+  weight2 += friction2
   var accelerationMagnitude =
-    (weight1 - weight2) /
+    (Math.abs(weight1 - weight2)) /
     (body1.mass + body2.mass);
+  console.log("A-Mag: " + accelerationMagnitude)
   // if (accelerationMagnitude < 0) {
   //   accelerationMagnitude = 0;
   // }
   // console.log({weight1: weight1, weight2: weight2, fric1: friction1, fric2: friction2, a: accelerationMagnitude, cos: (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position))})
-  return accelerationMagnitude;
+  return Math.abs(accelerationMagnitude);
 }
 
 /*
