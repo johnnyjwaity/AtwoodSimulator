@@ -7,7 +7,7 @@ var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
 const propertyTypes = { mass: "number", isStatic: "checkbox" };
-var units = {mass: "kg", acceleration: "m/s/s", velocity: "m/s"}
+var units = { mass: "kg", acceleration: "m/s/s", velocity: "m/s" };
 var selectedObject;
 var lines = [];
 var colors = [];
@@ -92,44 +92,76 @@ function animate(timeRan) {
             bodies[connection.obj1],
             bodies[connection.obj2]
           );
-          objects[objToApply].properties.acceleration = Math.round(tension * 1000000) / 100
-          var velocity = createVertex(bodies[objToApply].velocity.x, bodies[objToApply].velocity.y).magnitude()
-          objects[objToApply].properties.velocity = Math.round(velocity * 100) / 100
+          objects[objToApply].properties.acceleration =
+            Math.round(tension * 1000000) / 100;
+          var velocity = createVertex(
+            bodies[objToApply].velocity.x,
+            bodies[objToApply].velocity.y
+          ).magnitude();
+          velocity *= 10;
+          velocity /= 16.666667;
+          objects[objToApply].properties.velocity =
+            Math.round(velocity * 100) / 100;
           tension *= bodies[objToApply].mass;
 
-
           var otherBody;
-          var otherTanPoint
+          var otherTanPoint;
           var tanPoint;
           if (connection.obj1 != objToApply) {
             otherBody = bodies[connection.obj1];
-            otherTanPoint = connection.obj1Tan
-            tanPoint = connection.obj2Tan
+            otherTanPoint = connection.obj1Tan;
+            tanPoint = connection.obj2Tan;
           } else {
             otherBody = bodies[connection.obj2];
-            otherTanPoint = connection.obj2Tan
-            tanPoint = connection.obj1Tan
+            otherTanPoint = connection.obj2Tan;
+            tanPoint = connection.obj1Tan;
           }
 
           // if (otherMass > bodies[objToApply].mass) {
           //   tension *= -1;
           // }
 
-          var aDirection = createVertex(tanPoint.x - bodies[objToApply].position.x, tanPoint.y - bodies[objToApply].position.y)
-          var mag = aDirection.magnitude()
-          aDirection.x /= mag
-          aDirection.y /= mag
-          aDirection.x *= tension
-          aDirection.y *= tension
+          var aDirection = createVertex(
+            tanPoint.x - bodies[objToApply].position.x,
+            tanPoint.y - bodies[objToApply].position.y
+          );
+          var mag = aDirection.magnitude();
+          aDirection.x /= mag;
+          aDirection.y /= mag;
+          aDirection.x *= tension;
+          aDirection.y *= tension;
 
-          var weight = bodies[objToApply].mass * 0.00098 * Math.sin(Math.atan((bodies[objToApply].position.y - tanPoint.y) / (bodies[objToApply].position.x - tanPoint.x)));
-          var otherWeight = otherBody.mass * 0.00098 * Math.sin(Math.atan((otherBody.position.y - otherTanPoint.y) / (otherBody.position.x - otherTanPoint.x)));
-          console.log("Weight: " + weight + " Other Weight: " + otherWeight + " Acceleration: " + tension)
-          console.log(otherWeight)
+          var weight =
+            bodies[objToApply].mass *
+            0.00098 *
+            Math.sin(
+              Math.atan(
+                (bodies[objToApply].position.y - tanPoint.y) /
+                  (bodies[objToApply].position.x - tanPoint.x)
+              )
+            );
+          var otherWeight =
+            otherBody.mass *
+            0.00098 *
+            Math.sin(
+              Math.atan(
+                (otherBody.position.y - otherTanPoint.y) /
+                  (otherBody.position.x - otherTanPoint.x)
+              )
+            );
+          console.log(
+            "Weight: " +
+              weight +
+              " Other Weight: " +
+              otherWeight +
+              " Acceleration: " +
+              tension
+          );
+          console.log(otherWeight);
 
-          if(Math.abs(weight) > Math.abs(otherWeight)){
-            aDirection.x *= -1
-            aDirection.y *= -1
+          if (Math.abs(weight) > Math.abs(otherWeight)) {
+            aDirection.x *= -1;
+            aDirection.y *= -1;
           }
           // console.log(calcualteRopeLength(connection, bodies));
           Matter.Body.applyForce(
@@ -157,7 +189,7 @@ function animate(timeRan) {
           //     createVertex(0, 0.00098 * bodies[objToApply].mass)
           //   );
           // }
-        }else{
+        } else {
           Matter.Body.applyForce(
             bodies[i],
             Matter.Vertices.centre(bodies[i].vertices),
@@ -196,19 +228,48 @@ function calculateTension(c, bodies) {
   return tension;
 }
 function calculateTension1(c, body1, body2) {
-
-  var weight1 = Math.abs(body1.mass * 0.00098 * Math.sin(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))));
-  var weight2 = Math.abs(body2.mass * 0.00098 * Math.sin(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))));
-  console.log("Tension Weight: " + weight1 + " " + weight2)
+  var weight1 = Math.abs(
+    body1.mass *
+      0.00098 *
+      Math.sin(
+        Math.atan(
+          (body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)
+        )
+      )
+  );
+  var weight2 = Math.abs(
+    body2.mass *
+      0.00098 *
+      Math.sin(
+        Math.atan(
+          (body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)
+        )
+      )
+  );
+  console.log("Tension Weight: " + weight1 + " " + weight2);
   //If Object GOING DOWN SUbtract friction
-  var friction1 = body1.mass * 0.00098 * Math.cos(Math.atan((body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x))) * 0.2;
-  var friction2 = body2.mass * 0.00098 * Math.cos(Math.atan((body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x))) * 0.2;
-  weight1 += friction1
-  weight2 += friction2
+  var friction1 =
+    body1.mass *
+    0.00098 *
+    Math.cos(
+      Math.atan(
+        (body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)
+      )
+    ) *
+    0.2;
+  var friction2 =
+    body2.mass *
+    0.00098 *
+    Math.cos(
+      Math.atan(
+        (body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)
+      )
+    ) *
+    0.2;
   var accelerationMagnitude =
-    (Math.abs(weight1 - weight2)) /
+    (Math.abs(weight1 - weight2) - friction1 - friction2) /
     (body1.mass + body2.mass);
-  console.log("A-Mag: " + accelerationMagnitude)
+  console.log("A-Mag: " + accelerationMagnitude);
   // if (accelerationMagnitude < 0) {
   //   accelerationMagnitude = 0;
   // }
@@ -226,15 +287,45 @@ function calculateTension1(c, body1, body2) {
 function drawObjects(ctx) {
   /**
    * The first for loop randomizes the colors in colorPalette and stores them in the global colors array
-   * If there are no more colors availabe in the colors array, then the default fill color used is #fc7303 (light orange) 
+   * If there are no more colors availabe in the colors array, then the default fill color used is #fc7303 (light orange)
    */
-  var colorPalette = ["#f4c604", "#f69500", "#ff6700", "#ff004d", "#e50068", "#005cff", "#00ff1c", "#d9ff00", 
-  "#ffdc00", "#ff005a", "#ffcc00", "#66ccff", "#33cc99", "#ff3366", "#ff9900", "#f752bd", "#13e873", "#e9ff21",
-  "#52ed1a", "#864bbd", "#22d6d6", "#fc7303", "#de2904", "#c732ae", "#13a15a", "#1e5de6", "#ffe817", "#90ed39", 
-  "#f2189f", "#d41313", "#632bbd", "#1367cf"]
-  if (!simDrawn){
-    for (i = 0;i < colorPalette.length;i++){
-      var colorIndex = Math.floor(Math.random()*colorPalette.length);
+  var colorPalette = [
+    "#f4c604",
+    "#f69500",
+    "#ff6700",
+    "#ff004d",
+    "#e50068",
+    "#005cff",
+    "#00ff1c",
+    "#d9ff00",
+    "#ffdc00",
+    "#ff005a",
+    "#ffcc00",
+    "#66ccff",
+    "#33cc99",
+    "#ff3366",
+    "#ff9900",
+    "#f752bd",
+    "#13e873",
+    "#e9ff21",
+    "#52ed1a",
+    "#864bbd",
+    "#22d6d6",
+    "#fc7303",
+    "#de2904",
+    "#c732ae",
+    "#13a15a",
+    "#1e5de6",
+    "#ffe817",
+    "#90ed39",
+    "#f2189f",
+    "#d41313",
+    "#632bbd",
+    "#1367cf"
+  ];
+  if (!simDrawn) {
+    for (i = 0; i < colorPalette.length; i++) {
+      var colorIndex = Math.floor(Math.random() * colorPalette.length);
       colors.push(colorPalette[colorIndex]);
       var index = colorPalette.indexOf(colorIndex);
       if (index > -1) {
@@ -243,17 +334,15 @@ function drawObjects(ctx) {
     }
     simDrawn = true;
   }
-  
 
   for (i = 0; i < objects.length; i++) {
     ctx.beginPath();
-    if (i >= colors.length){
+    if (i >= colors.length) {
       ctx.fillStyle = "#fc7303";
-    }
-    else {
+    } else {
       ctx.fillStyle = colors[i];
     }
-    
+
     //Move to first Vertex
     ctx.moveTo(objects[i].vertices[0].x, objects[i].vertices[0].y);
     //This starts at index 1 becuase the first line should be going to the second vertex
@@ -516,6 +605,9 @@ function runSim() {
       isStatic: objects[i].properties.isStatic,
       mass: objects[i].properties.mass
     });
+
+    objects[i].properties.acceleration = 0;
+    objects[i].properties.velocity = 0;
     // Add these bodies to the world
     Matter.World.add(e.world, [obj]);
   }
@@ -555,10 +647,9 @@ function runSim() {
     // createConnection(objects[c1], objects[c2], objects[c3])
     createConnection(c1, c2, c3)
   );
-  if(selectedObject != null && selectedObject != undefined){
-    renderDisplayUI(selectedObject)
+  if (selectedObject != null && selectedObject != undefined) {
+    renderDisplayUI(selectedObject);
   }
-  
 }
 function createConnection(obj1, obj2, pulley) {
   // if (obj1.type == "obj1" && obj2.type == "obj2"){
@@ -995,7 +1086,6 @@ class InputField extends React.Component {
       input
     );
   }
-  
 }
 class InfoField extends React.Component {
   constructor(props) {
@@ -1010,9 +1100,9 @@ class InfoField extends React.Component {
       { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
       this.props.name
     );
-    var unit = ""
-    if(units[this.props.name] != undefined){
-      unit = units[this.props.name]
+    var unit = "";
+    if (units[this.props.name] != undefined) {
+      unit = units[this.props.name];
     }
     var value = e(
       "p",
@@ -1022,7 +1112,7 @@ class InfoField extends React.Component {
           marginTop: "16px",
           fontSize: "20px",
           width: "200px",
-          textAlign: 'right'
+          textAlign: "right"
         }
       },
       "" + this.state.val + " " + unit
@@ -1044,7 +1134,11 @@ class InfoField extends React.Component {
   }
 
   componentDidMount() {
-    this.interval = setInterval(() => this.setState({ val: this.props.object.properties[this.props.name] }), 16);
+    this.interval = setInterval(
+      () =>
+        this.setState({ val: this.props.object.properties[this.props.name] }),
+      16
+    );
   }
   componentWillUnmount() {
     clearInterval(this.interval);
@@ -1103,19 +1197,34 @@ class Menu extends React.Component {
       // }, 100);
       return e(
         "div",
-        { style: {
-          width: "300px",
-          backgroundColor: "#5d808c",
-          border: "dashed",
-          marginLeft: "20px",
-          paddingLeft: "10px"
-        } },
+        {
+          style: {
+            width: "300px",
+            backgroundColor: "#5d808c",
+            border: "dashed",
+            marginLeft: "20px",
+            marginBottom: "15px",
+            paddingLeft: "10px"
+          }
+        },
         valueFields
       );
     }
   }
 }
-
+class MenuContainer extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    var menus = [];
+    for (var i = 0; i < objects.length; i++) {
+      var menu = e(Menu, { object: objects[i], mode: "view" });
+      menus.push(menu);
+    }
+    return e("div", {}, menus);
+  }
+}
 const domConatiner = document.querySelector("#optionDisplay");
 function renderUI(object) {
   ReactDOM.unmountComponentAtNode(domConatiner);
@@ -1124,8 +1233,11 @@ function renderUI(object) {
 }
 function renderDisplayUI(object) {
   ReactDOM.unmountComponentAtNode(domConatiner);
-  menu = e(Menu, { object: object, mode: "view" });
-  ReactDOM.render(menu, domConatiner);
+
+  var container = e(MenuContainer, {});
+  ReactDOM.render(container, domConatiner);
+  // menu = e(Menu, { object: object, mode: "view" });
+  // ReactDOM.render(menu, domConatiner);
 }
 
 document.getElementById("window").addEventListener("click", function(e) {
@@ -1135,7 +1247,7 @@ document.getElementById("window").addEventListener("click", function(e) {
     if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
       if (usePhysics) {
         selectedObject = objects[i];
-        renderDisplayUI(selectedObject)
+        renderDisplayUI(selectedObject);
       } else {
         renderUI(objects[i], i);
         selectedObject = objects[i];

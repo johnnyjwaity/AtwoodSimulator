@@ -1,13 +1,13 @@
-body{
-  background-color: #4c8bac
+body {
+  background-color: #4c8bac;
 }
-#title{
+#title {
   font-family: Andale Mono, monospace, sans-serif;
-  color: rgb(249, 252, 255) ;
+  color: rgb(249, 252, 255);
 }
-.button{
+.button {
   background-color: rgba(108, 197, 212, 0.747);
-  border-color:  rgb(109, 125, 133);
+  border-color: rgb(109, 125, 133);
   border-width: 3px;
   color: azure;
   padding: 10px;
@@ -15,13 +15,13 @@ body{
   font-size: 20px;
   font-style: bold;
   border-radius: 25px;
-  box-shadow: 0 7px 14px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   cursor: pointer;
   outline: none;
 }
-#runSim{
+#runSim {
   background-color: rgba(56, 144, 245, 0.781);
-  border-color:  rgb(21, 83, 114);
+  border-color: rgb(21, 83, 114);
   border-width: 3px;
   color: azure;
   padding: 10px;
@@ -29,7 +29,7 @@ body{
   font-size: 20px;
   font-style: bold;
   border-radius: 25px;
-  box-shadow: 0 7px 14px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   cursor: pointer;
   outline: none;
 }
@@ -38,8 +38,10 @@ body{
   border-color: rgb(35, 38, 43);
   border-style: dashed;
   border-radius: 25px;
+  width: 1000px;
+  height: 800px;
 }
-#triangleBuilder {  
+#triangleBuilder {
   position: fixed;
   left: 50%;
   top: 50%;
@@ -48,6 +50,6 @@ body{
   height: 500px;
   border-radius: 25px;
   border: 2px;
-  border-style: groove
+  border-style: groove;
   /* margin-left: -500; */
 }
