@@ -8,7 +8,7 @@ body {
 }
 #window {
   border: 2px;
-  border-color: black;
+  border-color: rgb(61, 67, 71);
   border-style: solid;
   border-radius: 25px;
   float: left;
@@ -24,6 +24,8 @@ body {
   float: left;
   width: 50 px;
   margin-top: 15px;
+  color: rgb(61, 67, 71);
+  font-family: Andale Mono, monospace, sans-serif;
 }
 .lrgButton{
   float: left;
@@ -31,6 +33,7 @@ body {
   height: 100%;
   background-color: transparent;
   border-style: none;
-  color: #17252A;
+  color: rgb(61, 67, 71);
+  font-family: Andale Mono, monospace, sans-serif;
   font-size: 40px;
 }

@@ -10,6 +10,8 @@ const propertyTypes = { mass: "number", isStatic: "checkbox" };
 var units = {mass: "kg", acceleration: "m/s/s", velocity: "m/s"}
 var selectedObject;
 var lines = [];
+var colors = [];
+var simDrawn = false;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -17,7 +19,6 @@ function animate(timeRan) {
 
   //Remove Everything From Screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   //Draw all objects from their vertices onto the canvas
   drawObjects(ctx);
 
@@ -220,12 +221,39 @@ function calculateTension1(c, body1, body2) {
   array and draw them onto the canvas using their vertices
 
   @params
-  ctx - context for the canvas to draw on
+  ctx - context for the canvas to draw on 
 */
 function drawObjects(ctx) {
-  ctx.fillStyle = "000000";
+  /**
+   * The first for loop randomizes the colors in colorPalette and stores them in the global colors array
+   * If there are no more colors availabe in the colors array, then the default fill color used is #fc7303 (light orange) 
+   */
+  var colorPalette = ["#f4c604", "#f69500", "#ff6700", "#ff004d", "#e50068", "#005cff", "#00ff1c", "#d9ff00", 
+  "#ffdc00", "#ff005a", "#ffcc00", "#66ccff", "#33cc99", "#ff3366", "#ff9900", "#f752bd", "#13e873", "#e9ff21",
+  "#52ed1a", "#864bbd", "#22d6d6", "#fc7303", "#de2904", "#c732ae", "#13a15a", "#1e5de6", "#ffe817", "#90ed39", 
+  "#f2189f", "#d41313", "#632bbd", "#1367cf"]
+  if (!simDrawn){
+    for (i = 0;i < colorPalette.length;i++){
+      var colorIndex = Math.floor(Math.random()*colorPalette.length);
+      colors.push(colorPalette[colorIndex]);
+      var index = colorPalette.indexOf(colorIndex);
+      if (index > -1) {
+        array.splice(index, 1);
+      }
+    }
+    simDrawn = true;
+  }
+  
+
   for (i = 0; i < objects.length; i++) {
     ctx.beginPath();
+    if (i >= colors.length){
+      ctx.fillStyle = "#fc7303";
+    }
+    else {
+      ctx.fillStyle = colors[i];
+    }
+    
     //Move to first Vertex
     ctx.moveTo(objects[i].vertices[0].x, objects[i].vertices[0].y);
     //This starts at index 1 becuase the first line should be going to the second vertex
@@ -1048,7 +1076,7 @@ class Menu extends React.Component {
         {
           style: {
             width: "300px",
-            backgroundColor: "white",
+            backgroundColor: "#5d808c",
             border: "dashed",
             marginLeft: "20px",
             paddingLeft: "10px"
@@ -1077,7 +1105,7 @@ class Menu extends React.Component {
         "div",
         { style: {
           width: "300px",
-          backgroundColor: "white",
+          backgroundColor: "#5d808c",
           border: "dashed",
           marginLeft: "20px",
           paddingLeft: "10px"

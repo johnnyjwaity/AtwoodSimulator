@@ -1,13 +1,45 @@
 body{
   background-color: #4c8bac
 }
+#title{
+  font-family: Andale Mono, monospace, sans-serif;
+  color: rgb(249, 252, 255) ;
+}
+.button{
+  background-color: rgba(108, 197, 212, 0.747);
+  border-color:  rgb(109, 125, 133);
+  border-width: 3px;
+  color: azure;
+  padding: 10px;
+  font-family: Andale Mono, monospace, sans-serif;
+  font-size: 20px;
+  font-style: bold;
+  border-radius: 25px;
+  box-shadow: 0 7px 14px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  cursor: pointer;
+  outline: none;
+}
+#runSim{
+  background-color: rgba(56, 144, 245, 0.781);
+  border-color:  rgb(21, 83, 114);
+  border-width: 3px;
+  color: azure;
+  padding: 10px;
+  font-family: Andale Mono, monospace, sans-serif;
+  font-size: 20px;
+  font-style: bold;
+  border-radius: 25px;
+  box-shadow: 0 7px 14px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  cursor: pointer;
+  outline: none;
+}
 #window {
   border: 2px;
-  border-color: black;
+  border-color: rgb(35, 38, 43);
   border-style: dashed;
   border-radius: 25px;
 }
-#triangleBuilder {
+#triangleBuilder {  
   position: fixed;
   left: 50%;
   top: 50%;

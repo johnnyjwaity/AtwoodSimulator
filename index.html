@@ -14,35 +14,35 @@
     <link rel="stylesheet" href="main.css" type="text/css" />
   </head>
   <body>
-    <h1>Atwood Machine Simulator</h1>
+    <h1 id="title">Atwood Machine Simulator</h1>
     <section id="matter-window"></section>
     <section style="display: flex">
       <canvas id="window" width="1000" height="800"></canvas>
       <div id="optionDisplay"></div>
     </section>
 
-    <button onclick="objects.push(createRect(5, 5, 100, 100))">
+    <button class="button" id="createBox" onclick="objects.push(createRect(5, 5, 100, 100))">
       Create Box
     </button>
-    <button onclick="createCircle(15, 2.5, 'circleObject')">
+    <button class="button" id="createCircle" onclick="createCircle(15, 2.5, 'circleObject')">
       Create Circle
     </button>
-    <button onclick="objects.push(createRect(0, 750, 1000, 50))">
+    <button class="button" id="createFloor" onclick="objects.push(createRect(0, 750, 1000, 50))">
       Create Floor
     </button>
     <button
-      onclick="objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800))"
+      class="button" id="createWalls" onclick="objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800))"
     >
       Create Walls
     </button>
-    <button onclick="openTriangleBuilder()">Create Ramp</button>
+    <button class="button" id="createRamp" onclick="openTriangleBuilder()">Create Ramp</button>
+    <button class="button" id="createPulley" onclick="createCircle(50, 'pulley')">Create Pulley</button>
     <button
-      onClick="objects.push(createRect(0, 750, 1000, 50, 'floor')); objects.push(createRect(0, 0, 10, 800, 'leftWall')); objects.push(createRect(990, 0, 10, 800, 'rightWall')); objects.push(createRect(0, 0, 30, 30, 'obj1')); objects.push(createRect(0, 0, 30, 30, 'obj2')); createCircle(50, 'pulley')"
+      class="button" onClick="objects.push(createRect(0, 750, 1000, 50, 'floor')); objects.push(createRect(0, 0, 10, 800, 'leftWall')); objects.push(createRect(990, 0, 10, 800, 'rightWall')); objects.push(createRect(0, 0, 30, 30, 'obj1')); objects.push(createRect(0, 0, 30, 30, 'obj2')); createCircle(50, 'pulley')"
     >
-      CREATE SIM
+      Create Sim
     </button>
-    <button onclick="runSim()">Run</button>
-    <button onclick="createCircle(50, 'pulley')">Create Pulley</button>
+    <button id="runSim" onclick="runSim()">Run</button>
     <!--
       <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
     -->
