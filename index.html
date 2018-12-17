@@ -11,38 +11,69 @@
       crossorigin
     ></script>
     <script type="text/javascript" src="matter.js"></script>
+    <script type="text/javascript" src="Chart.js"></script>
     <link rel="stylesheet" href="main.css" type="text/css" />
   </head>
   <body>
     <h1 id="title">Atwood Machine Simulator</h1>
     <section id="matter-window"></section>
     <section style="display: flex">
+      <section id="button-holder">
+        <button
+          class="button"
+          id="createBox"
+          onclick="objects.push(createRect(5, 5, 100, 100))"
+        >
+          Create Box
+        </button>
+        <button
+          class="button"
+          id="createCircle"
+          onclick="createCircle(15, 2.5, 'circleObject')"
+        >
+          Create Circle
+        </button>
+        <button
+          class="button"
+          id="createFloor"
+          onclick="objects.push(createRect(0, 750, 1000, 50))"
+        >
+          Create Floor
+        </button>
+        <button
+          class="button"
+          id="createWalls"
+          onclick="objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800))"
+        >
+          Create Walls
+        </button>
+        <button class="button" id="createRamp" onclick="openTriangleBuilder()">
+          Create Ramp
+        </button>
+        <button
+          class="button"
+          id="createPulley"
+          onclick="createCircle(50, 'pulley')"
+        >
+          Create Pulley
+        </button>
+        <button
+          class="button"
+          onClick="objects.push(createRect(0, 750, 1000, 50, 'floor')); objects.push(createRect(0, 0, 10, 800, 'leftWall')); objects.push(createRect(990, 0, 10, 800, 'rightWall')); objects.push(createRect(0, 0, 30, 30, 'obj1')); objects.push(createRect(0, 0, 30, 30, 'obj2')); createCircle(50, 'pulley')"
+        >
+          Create Sim
+        </button>
+        <button class="button" onclick="createRope()">Create Rope</button>
+        <button id="runSim" onclick="runSim()">Run</button>
+      </section>
       <canvas id="window" width="1000" height="800"></canvas>
       <div id="optionDisplay"></div>
     </section>
 
-    <button class="button" id="createBox" onclick="objects.push(createRect(5, 5, 100, 100))">
-      Create Box
-    </button>
-    <button class="button" id="createCircle" onclick="createCircle(15, 2.5, 'circleObject')">
-      Create Circle
-    </button>
-    <button class="button" id="createFloor" onclick="objects.push(createRect(0, 750, 1000, 50))">
-      Create Floor
-    </button>
-    <button
-      class="button" id="createWalls" onclick="objects.push(createRect(0, 0, 10, 800)); objects.push(createRect(990, 0, 10, 800))"
-    >
-      Create Walls
-    </button>
-    <button class="button" id="createRamp" onclick="openTriangleBuilder()">Create Ramp</button>
-    <button class="button" id="createPulley" onclick="createCircle(50, 'pulley')">Create Pulley</button>
-    <button
-      class="button" onClick="objects.push(createRect(0, 750, 1000, 50, 'floor')); objects.push(createRect(0, 0, 10, 800, 'leftWall')); objects.push(createRect(990, 0, 10, 800, 'rightWall')); objects.push(createRect(0, 0, 30, 30, 'obj1')); objects.push(createRect(0, 0, 30, 30, 'obj2')); createCircle(50, 'pulley')"
-    >
-      Create Sim
-    </button>
-    <button id="runSim" onclick="runSim()">Run</button>
+    <section id="graph-window">
+      <canvas width="400" height="400" id="graph"></canvas>
+    </section>
+
     <!--
       <iframe src="triangle.html" id="triangleBuilder" frameBorder=0></iframe>
     -->

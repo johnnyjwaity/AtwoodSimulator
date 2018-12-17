@@ -1,15 +1,16 @@
 body {
   /* display: inline-block; */
-  background-color: #3AAFA9;
+  background-color: rgba(108, 197, 212, 0.747);
 }
-#input-container{
+#input-container {
   width: 100%;
   height: 400px;
 }
 #window {
-  border: 2px;
-  border-color: rgb(61, 67, 71);
-  border-style: solid;
+  border-style: outset;
+  border-color: rgb(109, 125, 133);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-width: 5px;
   border-radius: 25px;
   float: left;
 }
@@ -27,7 +28,7 @@ body {
   color: rgb(61, 67, 71);
   font-family: Andale Mono, monospace, sans-serif;
 }
-.lrgButton{
+.lrgButton {
   float: left;
   width: 50%;
   height: 100%;

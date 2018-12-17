@@ -3530,7 +3530,7 @@ var Vector = _dereq_('../geometry/Vector');
         vertexToBody.y = vertex.y - bodyAPosition.y;
         nearestDistance = -Vector.dot(normal, vertexToBody);
         vertexB = vertex;
-
+        
         var nextIndex = (vertexA.index + 1) % vertices.length;
         vertex = vertices[nextIndex];
         vertexToBody.x = vertex.x - bodyAPosition.x;

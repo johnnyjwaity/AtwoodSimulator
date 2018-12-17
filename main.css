@@ -1,3 +1,8 @@
+@font-face {
+  font-family: "Simplifica";
+  src: url("SIMPLIFICA.ttf");
+}
+
 body {
   background-color: #4c8bac;
 }
@@ -18,6 +23,12 @@ body {
   box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   cursor: pointer;
   outline: none;
+  width: 180px;
+  margin-bottom: 10px;
+  height: 50px;
+}
+.button:hover {
+  width: 190px;
 }
 #runSim {
   background-color: rgba(56, 144, 245, 0.781);
@@ -32,12 +43,18 @@ body {
   box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   cursor: pointer;
   outline: none;
+  width: 180px;
+}
+#runSim:hover {
+  background-color: #48a70b;
 }
 #window {
-  border: 2px;
-  border-color: rgb(35, 38, 43);
-  border-style: dashed;
+  border-style: outset;
+  border-color: rgb(109, 125, 133);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-width: 5px;
   border-radius: 25px;
+  outline: none;
   width: 1000px;
   height: 800px;
 }
@@ -48,8 +65,34 @@ body {
   transform: translate(-50%, -50%);
   width: 1000px;
   height: 500px;
+  border-style: outset;
+  border-color: rgb(109, 125, 133);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-width: 5px;
   border-radius: 25px;
-  border: 2px;
-  border-style: groove;
   /* margin-left: -500; */
+}
+#button-holder {
+  width: 190px;
+}
+#graph-window {
+  background-color: rgba(108, 197, 212, 0.747);
+  width: 500px;
+  height: 500px;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-style: outset;
+  border-color: rgb(109, 125, 133);
+  box-shadow: 0 7px 14px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-width: 5px;
+  border-radius: 25px;
+  z-index: -1;
+}
+#graph {
+  background-color: white;
+  margin: 50px;
+  width: 400px;
+  height: 400px;
 }

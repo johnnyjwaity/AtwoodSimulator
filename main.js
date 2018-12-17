@@ -1,4 +1,5 @@
 var objects = [];
+var backupObjects = [];
 var connections = [];
 var engine;
 var usePhysics = false;
@@ -6,12 +7,26 @@ var lastTime = 0;
 var startHeight = 55;
 var abovePulley = false;
 var previousPos = -1;
-const propertyTypes = { mass: "number", isStatic: "checkbox" };
-var units = { mass: "kg", acceleration: "m/s/s", velocity: "m/s" };
+const propertyTypes = {
+  mass: "number",
+  isStatic: "checkbox",
+  friction: "number",
+  radius: "number"
+};
+var units = {
+  mass: "kg",
+  acceleration: "m/s/s",
+  velocity: "m/s",
+  radius: "m",
+  friction: "μ",
+  angularVel: "rad/s",
+  angularAccel: "rad/s/s"
+};
 var selectedObject;
 var lines = [];
 var colors = [];
 var simDrawn = false;
+var startTime;
 
 function animate(timeRan) {
   var canvas = document.getElementById("window");
@@ -19,6 +34,8 @@ function animate(timeRan) {
 
   //Remove Everything From Screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, 1000, 800);
   //Draw all objects from their vertices onto the canvas
   drawObjects(ctx);
 
@@ -29,23 +46,64 @@ function animate(timeRan) {
     ctx.stroke();
   }
 
+  for (c = 0; c < connections.length; c++) {
+    drawTangentalLine(
+      connections[c].obj1,
+      connections[c].pulley,
+      connections[c]
+    );
+    drawTangentalLine(
+      connections[c].obj2,
+      connections[c].pulley,
+      connections[c]
+    );
+
+    var center = Matter.Vertices.centre(
+      objects[connections[c].pulley].vertices
+    );
+    var radius = vertexDistance(
+      center,
+      objects[connections[c].pulley].vertices[0]
+    );
+
+    ctx.beginPath();
+    ctx.arc(
+      center.x,
+      center.y,
+      radius,
+      Math.atan2(
+        connections[c].obj1Tan.y - center.y,
+        connections[c].obj1Tan.x - center.x
+      ),
+      Math.atan2(
+        connections[c].obj2Tan.y - center.y,
+        connections[c].obj2Tan.x - center.x
+      )
+    );
+    ctx.stroke();
+  }
+
   var deltaTime = timeRan - lastTime;
   lastTime = timeRan;
 
+  for (r = 0; r < objects.length; r++) {
+    if (objects[r].vertices.length > 4) {
+      var center = Matter.Vertices.centre(objects[r].vertices);
+      var radius = vertexDistance(center, objects[r].vertices[0]);
+      radius /= 100;
+      if (Math.abs(radius - objects[r].properties.radius) > 0.1) {
+        var newCircle = Matter.Bodies.circle(
+          center.x,
+          center.y,
+          objects[r].properties.radius * 100
+        );
+        objects[r].vertices = newCircle.vertices;
+      }
+    }
+  }
+
   //This will be true once run is pressed
   if (usePhysics) {
-    for (c = 0; c < connections.length; c++) {
-      drawTangentalLine(
-        connections[c].obj1,
-        connections[c].pulley,
-        connections[c]
-      );
-      drawTangentalLine(
-        connections[c].obj2,
-        connections[c].pulley,
-        connections[c]
-      );
-    }
     //Get all bodies from the Matter World
     var bodies = Matter.Composite.allBodies(engine.world);
     //Clear Objects
@@ -88,6 +146,11 @@ function animate(timeRan) {
           );
           // objects[objToApply].properties.mass += 1
           tension = calculateTension1(
+            connection,
+            bodies[connection.obj1],
+            bodies[connection.obj2]
+          );
+          tension = calculateTension2(
             connection,
             bodies[connection.obj1],
             bodies[connection.obj2]
@@ -149,46 +212,62 @@ function animate(timeRan) {
                   (otherBody.position.x - otherTanPoint.x)
               )
             );
-          console.log(
-            "Weight: " +
-              weight +
-              " Other Weight: " +
-              otherWeight +
-              " Acceleration: " +
-              tension
-          );
-          console.log(otherWeight);
+
+          // console.log(
+          //   "Weight: " +
+          //     weight +
+          //     " Other Weight: " +
+          //     otherWeight +
+          //     " Acceleration: " +
+          //     tension
+          // );
+          // console.log(otherWeight);
 
           if (Math.abs(weight) > Math.abs(otherWeight)) {
             aDirection.x *= -1;
             aDirection.y *= -1;
           }
           // console.log(calcualteRopeLength(connection, bodies));
-          Matter.Body.applyForce(
-            bodies[objToApply],
-            Matter.Vertices.centre(bodies[objToApply].vertices),
-            aDirection
-          );
-          // if (ropeDifference < 1) {
 
-          // } else if (
-          //   calcualteRopeLength(connection, bodies) > connection.ropeLength
-          // ) {
-          //   Matter.Body.applyForce(
-          //     bodies[objToApply],
-          //     Matter.Vertices.centre(bodies[objToApply].vertices),
-          //     createVertex(0, -0.00098 * bodies[objToApply].mass)
-          //   );
-          //   Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
-          // } else if (
-          //   calcualteRopeLength(connection, bodies) < connection.ropeLength
-          // ) {
-          //   Matter.Body.applyForce(
-          //     bodies[objToApply],
-          //     Matter.Vertices.centre(bodies[objToApply].vertices),
-          //     createVertex(0, 0.00098 * bodies[objToApply].mass)
-          //   );
-          // }
+          if (ropeDifference < 0.1) {
+            Matter.Body.applyForce(
+              bodies[objToApply],
+              Matter.Vertices.centre(bodies[objToApply].vertices),
+              aDirection
+            );
+          } else if (
+            calcualteRopeLength(connection, bodies) > connection.ropeLength
+          ) {
+            Matter.Body.applyForce(
+              bodies[objToApply],
+              Matter.Vertices.centre(bodies[objToApply].vertices),
+              createVertex(0, -0.00098 * bodies[objToApply].mass)
+            );
+            Matter.Body.setVelocity(bodies[objToApply], createVertex(0, 0));
+          } else if (
+            calcualteRopeLength(connection, bodies) < connection.ropeLength
+          ) {
+            Matter.Body.applyForce(
+              bodies[objToApply],
+              Matter.Vertices.centre(bodies[objToApply].vertices),
+              createVertex(0, 0.00098 * bodies[objToApply].mass)
+            );
+          }
+          console.log(
+            vertexDistance(
+              Matter.Vertices.centre(objects[objToApply].vertices),
+              tanPoint
+            )
+          );
+          var r = objects[connection.pulley].properties.radius * 100;
+          var d = vertexDistance(
+            Matter.Vertices.centre(objects[objToApply].vertices),
+            tanPoint
+          );
+          console.log(r);
+          if (d - 15 < r) {
+            stop();
+          }
         } else {
           Matter.Body.applyForce(
             bodies[i],
@@ -197,19 +276,74 @@ function animate(timeRan) {
           );
         }
       }
+      console.log(bodies);
       objects[i].vertices = bodies[i].vertices;
     }
-    for (i = 0; i < bodies.length; i++) {
-      if (!bodies[i].isStatic && bodies[i].force.y > 0) {
-        // console.log(bodies[i].force.y);
-        // console.log({ force: bodies[i].force, mass: bodies[i].mass });
+
+    for (c = 0; c < connections.length; c++) {
+      var linearVelocity = objects[connections[c].obj1].properties.velocity;
+      var pulleyCenter = Matter.Vertices.centre(
+        objects[connections[c].pulley].vertices
+      );
+      var rad = vertexDistance(
+        pulleyCenter,
+        objects[connections[c].pulley].vertices[0]
+      );
+
+      objects[connections[c].pulley].properties.angularAccel =
+        Math.round(
+          (objects[connections[c].obj1].properties.acceleration / (rad / 100)) *
+            100
+        ) / 100;
+      console.log("Linear: " + linearVelocity);
+      console.log("Rad: " + rad);
+      var angularVelocity =
+        Math.round((linearVelocity / (rad / 100)) * 100) / 100;
+      objects[connections[c].pulley].properties.angularVel = angularVelocity;
+      angularVelocity *= deltaTime / 1000;
+      console.log("Angle: " + angularVelocity);
+
+      var center1 = Matter.Vertices.centre(
+        objects[connections[c].obj1].vertices
+      );
+      var weight1 =
+        objects[connections[c].obj1].properties.mass *
+        0.00098 *
+        Math.sin(
+          Math.atan((center1.y - tanPoint.y) / (center1.x - tanPoint.x))
+        );
+      var center2 = Matter.Vertices.centre(
+        objects[connections[c].obj2].vertices
+      );
+      var weight2 =
+        otherBody.mass *
+        0.00098 *
+        Math.sin(
+          Math.atan(
+            (center2.y - otherTanPoint.y) / (center2.x - otherTanPoint.x)
+          )
+        );
+
+      if (Math.abs(weight1) > Math.abs(weight2)) {
+        if (center1.x < pulleyCenter.x) {
+          angularVelocity *= -1;
+        }
+      } else {
+        if (center2.x < pulleyCenter.x) {
+          angularVelocity *= -1;
+        }
       }
-    }
-    if (selectedObject != null || selectedObject != undefined) {
-      // renderDisplayUI(selectedObject);
+
+      rotateVertices(objects[connections[c].pulley], angularVelocity);
     }
     //Make Engine Move Foward By Delta Time
     Matter.Engine.update(engine, deltaTime);
+    if (timeRan - startTime > 2000) {
+      stop();
+    }
+    archive(timeRan);
+  } else {
+    startTime = timeRan;
   }
 
   //Run the Animate Function again to make it recursive
@@ -217,6 +351,26 @@ function animate(timeRan) {
 }
 //Initial Animate Start
 animate();
+
+function stop() {
+  engine.enabled = false;
+  usePhysics = false;
+}
+function reset() {
+  objects = backupObjects;
+}
+
+function archive(time) {
+  for (i = 0; i < objects.length; i++) {
+    for (p = 0; p < Object.keys(objects[i].properties).length; p++) {
+      var propertyName = Object.keys(objects[i].properties)[p];
+      objects[i].archive[propertyName].push({
+        time: time,
+        value: objects[i].properties[propertyName]
+      });
+    }
+  }
+}
 
 function calculateTension(c, bodies) {
   // console.log(bodies[c.obj1])
@@ -246,7 +400,7 @@ function calculateTension1(c, body1, body2) {
         )
       )
   );
-  console.log("Tension Weight: " + weight1 + " " + weight2);
+  // console.log("Tension Weight: " + weight1 + " " + weight2);
   //If Object GOING DOWN SUbtract friction
   var friction1 =
     body1.mass *
@@ -269,12 +423,69 @@ function calculateTension1(c, body1, body2) {
   var accelerationMagnitude =
     (Math.abs(weight1 - weight2) - friction1 - friction2) /
     (body1.mass + body2.mass);
-  console.log("A-Mag: " + accelerationMagnitude);
+  // console.log("A-Mag: " + accelerationMagnitude);
   // if (accelerationMagnitude < 0) {
   //   accelerationMagnitude = 0;
   // }
   // console.log({weight1: weight1, weight2: weight2, fric1: friction1, fric2: friction2, a: accelerationMagnitude, cos: (Math.abs(c.obj1Tan.x - body1.position.x) / vertexDistance(c.obj1Tan, body1.position))})
+
   return Math.abs(accelerationMagnitude);
+}
+
+function calculateTension2(c, body1, body2) {
+  var weightBody1 = Math.abs(
+    body1.mass *
+      0.00098 *
+      Math.sin(
+        Math.atan(
+          (body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)
+        )
+      )
+  );
+  var weightBody2 = Math.abs(
+    body2.mass *
+      0.00098 *
+      Math.sin(
+        Math.atan(
+          (body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)
+        )
+      )
+  );
+  var coEf = 0;
+  for (var i = 0; i < objects.length; i++) {
+    if (objects[i].vertices.length == 3) {
+      coEf = objects[i].properties.friction;
+    }
+  }
+  console.log("Friction: " + coEf);
+  var friction1 =
+    body1.mass *
+    0.00098 *
+    Math.cos(
+      Math.atan(
+        (body1.position.y - c.obj1Tan.y) / (body1.position.x - c.obj1Tan.x)
+      )
+    ) *
+    coEf;
+  var friction2 =
+    body2.mass *
+    0.00098 *
+    Math.cos(
+      Math.atan(
+        (body2.position.y - c.obj2Tan.y) / (body2.position.x - c.obj2Tan.x)
+      )
+    ) *
+    coEf;
+
+  var weight1 = weightBody1 > weightBody2 ? weightBody1 : weightBody2;
+  var mass1 = weightBody1 > weightBody2 ? body1.mass : body2.mass;
+  var weight2 = weightBody2 > weightBody1 ? weightBody1 : weightBody2;
+  var mass2 = weightBody2 > weightBody1 ? body1.mass : body2.mass;
+
+  var acceleration =
+    (weight1 - weight2 - friction1 - friction2) /
+    (mass1 + mass2 + 0.5 * objects[c.pulley].properties.mass);
+  return acceleration;
 }
 
 /*
@@ -353,6 +564,15 @@ function drawObjects(ctx) {
     ctx.lineTo(objects[i].vertices[0].x, objects[i].vertices[0].y);
     //Fill in the shape with color
     ctx.fill();
+
+    if (objects[i].vertices.length > 4) {
+      ctx.beginPath();
+      var center = Matter.Vertices.centre(objects[i].vertices);
+      ctx.moveTo(center.x, center.y);
+      ctx.lineTo(objects[i].vertices[0].x, objects[i].vertices[0].y);
+      ctx.strokeStyle = "#FF0000";
+      ctx.stroke();
+    }
   }
 }
 function calcSlope(v1, v2) {
@@ -507,14 +727,26 @@ function determineMass(mass) {
   An object that contains array of vertices
 */
 function createObject(vertices, objType) {
-  if (objType == "floor") {
-    console.log("objType::" + objType);
+  var properties = {};
+  if (
+    vertices.length >= 4 &&
+    objType != "floor" &&
+    objType != "leftWall" &&
+    objType != "rightWall"
+  ) {
+    properties["mass"] = vertices.length == 4 ? 1 : 0;
+  }
+  if (vertices.length == 3) {
+    properties["friction"] = 0;
+  }
+  if (vertices.length > 4) {
+    properties["radius"] = 0.5;
   }
   return {
     vertices: vertices,
     rotation: 0,
     type: objType,
-    properties: { mass: 1, isStatic: false }
+    properties: properties
   };
 }
 
@@ -543,57 +775,22 @@ function createVertex(x, y) {
   the physics engine to simulate them
 */
 function runSim() {
+  // backupObjects = []
+  // for(o = 0; o < obje)
   console.log(objects);
   //Create a new Physics Engine
   var e = Matter.Engine.create();
   e.world.gravity.y = 0; //0.98;
   objectProperties = [];
   for (i = 0; i < objects.length; i++) {
-    //Create a physics body from the vertices
-    // if (i < 3 || i == 5) {
-    console.log(objects[i].type);
-    // if (
-    //   objects[i].type == "floor" ||
-    //   objects[i].type == "leftWall" ||
-    //   objects[i].type == "rightWall" ||
-    //   objects[i].type == "pulley" ||
-    //   objects[i].type == "ramp"
-    // ) {
-    //   var obj = Matter.Body.create({
-    //     position: Matter.Vertices.centre(objects[i].vertices),
-    //     vertices: objects[i].vertices,
-    //     frictionAir: 0,
-    //     friction: 0,
-    //     restitution: 0,
-    //     isStatic: true,
-    //     velocity: { x: 0, y: 0 }
-    //   });
-    //   //Add these bodies to the world
-    //   Matter.World.add(e.world, [obj]);
-    // } else {
-    //   var obj = Matter.Body.create({
-    //     position: Matter.Vertices.centre(objects[i].vertices),
-    //     vertices: objects[i].vertices,
-    //     frictionAir: 0,
-    //     friction: 0,
-    //     restitution: 0,
-    //     mass: 10,
-    //     isStatic: false,
-    //     velocity: { x: 0, y: 0 },
-    //     inertia: Infinity
-    //   });
-    //   // console.log(obj.mass)
-    //   // console.log(objects[i].properties.mass);
-    //   // Matter.Body.setMass(obj, objects[i].properties.mass);
-    //   if (i == 3) {
-    //     Matter.Body.setMass(obj, 5);
-    //   }
-    //   // console.log(obj.position);
-    //   //Add these bodies to the world
-    //   console.log("1");
-    //   console.log(obj);
-    //   Matter.World.add(e.world, [obj]);
-    // }
+    var isStatic =
+      objects[i].type == "floor" ||
+      objects[i].type == "leftWall" ||
+      objects[i].type == "rightWall" ||
+      objects[i].vertices.length != 4
+        ? true
+        : false;
+
     var obj = Matter.Body.create({
       position: Matter.Vertices.centre(objects[i].vertices),
       vertices: objects[i].vertices,
@@ -602,12 +799,26 @@ function runSim() {
       restitution: 0,
       velocity: { x: 0, y: 0 },
       inertia: Infinity,
-      isStatic: objects[i].properties.isStatic,
+      isStatic: isStatic,
       mass: objects[i].properties.mass
     });
+    if (
+      objects[i].vertices.length == 4 &&
+      Object.keys(objects[i].properties).length != 0
+    ) {
+      objects[i].properties.acceleration = 0;
+      objects[i].properties.velocity = 0;
+    }
+    if (objects[i].vertices.length > 4) {
+      objects[i].properties.angularVel = 0;
+      objects[i].properties.angularAccel = 0;
+    }
+    objects[i].archive = {};
+    for (p = 0; p < Object.keys(objects[i].properties).length; p++) {
+      var propName = Object.keys(objects[i].properties)[p];
+      objects[i].archive[propName] = [];
+    }
 
-    objects[i].properties.acceleration = 0;
-    objects[i].properties.velocity = 0;
     // Add these bodies to the world
     Matter.World.add(e.world, [obj]);
   }
@@ -626,27 +837,11 @@ function runSim() {
   //Run the Engine and the Renderer
   // Matter.Render.run(render);
 
-  var c1 = 0;
-  var c2 = 1;
-  var c3 = 2;
-
-  for (i = 0; i < objects.length; i++) {
-    if (objects[i].type == "obj1") {
-      c1 = i;
-    }
-    if (objects[i].type == "obj2") {
-      c2 = i;
-    }
-    if (objects[i].type == "pulley") {
-      c3 = i;
-    }
-  }
-
-  connections.push(
-    // createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
-    // createConnection(objects[c1], objects[c2], objects[c3])
-    createConnection(c1, c2, c3)
-  );
+  // connections.push(
+  //   // createConnection(objects.length - 3, objects.length - 2, objects.length - 1)
+  //   // createConnection(objects[c1], objects[c2], objects[c3])
+  //   // createConnection(c1, c2, c3)
+  // );
   if (selectedObject != null && selectedObject != undefined) {
     renderDisplayUI(selectedObject);
   }
@@ -700,7 +895,11 @@ document.getElementById("window").addEventListener("mousemove", function(e) {
       }
 
       rotate(dragIndex);
-      snapToTangent(dragIndex, e.pageX);
+
+      snapToTangent(
+        dragIndex,
+        translatePointOnCanvas(createVertex(e.pageX, 0)).x
+      );
       if (objects[dragIndex].vertices.length > 4) {
         pulleySnap(
           objects[dragIndex],
@@ -1028,6 +1227,39 @@ function intersection(x0, y0, r0, x1, y1, r1) {
 
   return [xi, yi, xi_prime, yi_prime];
 }
+var chart = null;
+function graph(object, property) {
+  if (chart != null) {
+    chart.destroy();
+  }
+  var ctx = document.getElementById("graph").getContext("2d");
+  var data = [];
+  var objData = object.archive[property];
+  var startTime = objData[0].time;
+  for (i = 0; i < objData.length; i++) {
+    data.push({ x: (objData[i].time - startTime) / 1000, y: objData[i].value });
+  }
+  document.getElementById("graph-window").style.zIndex = 0;
+  chart = new Chart(ctx, {
+    type: "scatter",
+    data: {
+      datasets: [
+        {
+          label: property,
+          showLine: true,
+          data,
+          backgroundColor: "rgba(108, 197, 212, 0.747)"
+        }
+      ]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      width: 400,
+      height: 400
+    }
+  });
+}
 
 ("use strict");
 
@@ -1049,7 +1281,15 @@ class InputField extends React.Component {
   render() {
     var title = e(
       "p",
-      { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
+      {
+        style: {
+          display: "inline-block",
+          width: "75px",
+          fontSize: "20px",
+          fontFamily: "Andale Mono",
+          color: "azure"
+        }
+      },
       this.props.name + ": "
     );
     var input = e(
@@ -1079,7 +1319,8 @@ class InputField extends React.Component {
           display: "grid",
           gridTemplateColumns: "max-content min-content",
           gridGap: "5px",
-          height: "50px"
+          height: "50px",
+          marginBottom: "10px"
         }
       },
       title,
@@ -1097,7 +1338,15 @@ class InfoField extends React.Component {
   render() {
     var title = e(
       "p",
-      { style: { display: "inline-block", width: "75px", fontSize: "20px" } },
+      {
+        style: {
+          display: "inline-block",
+          width: "75px",
+          fontSize: "20px",
+          fontFamily: "Andale Mono",
+          color: "azure"
+        }
+      },
       this.props.name
     );
     var unit = "";
@@ -1108,28 +1357,48 @@ class InfoField extends React.Component {
       "p",
       {
         style: {
-          height: "30px",
-          marginTop: "16px",
+          display: "inline-block",
+          width: "75px",
           fontSize: "20px",
-          width: "200px",
-          textAlign: "right"
+          fontFamily: "Andale Mono",
+          color: "azure",
+          textAlign: "right",
+          width: "140px",
+          marginRight: "20px"
         }
       },
       "" + this.state.val + " " + unit
+    );
+
+    var graphButton = e(
+      "button",
+      {
+        style: {
+          display: "inline-block",
+          border: "outset",
+          borderColor: "#6d7d85",
+          borderRadius: "25px",
+          backgroundColor: "rgba(108, 197, 212, 0.747)",
+          color: "azure"
+        },
+        onClick: () => graph(this.props.object, this.props.name)
+      },
+      "Graph"
     );
 
     return e(
       "div",
       {
         style: {
-          display: "grid",
-          gridTemplateColumns: "max-content min-content",
+          display: "inline-block",
           gridGap: "5px",
-          height: "50px"
+          height: "50px",
+          width: "300px"
         }
       },
       title,
-      value
+      value,
+      graphButton
     );
   }
 
@@ -1170,8 +1439,10 @@ class Menu extends React.Component {
         {
           style: {
             width: "300px",
-            backgroundColor: "#5d808c",
-            border: "dashed",
+            backgroundColor: "rgba(108, 197, 212, 0.747)",
+            border: "outset",
+            borderColor: "#6d7d85",
+            borderRadius: "25px",
             marginLeft: "20px",
             paddingLeft: "10px"
           }
@@ -1200,10 +1471,11 @@ class Menu extends React.Component {
         {
           style: {
             width: "300px",
-            backgroundColor: "#5d808c",
-            border: "dashed",
+            backgroundColor: "rgba(108, 197, 212, 0.747)",
+            border: "outset",
+            borderColor: "#6d7d85",
+            borderRadius: "25px",
             marginLeft: "20px",
-            marginBottom: "15px",
             paddingLeft: "10px"
           }
         },
@@ -1219,7 +1491,10 @@ class MenuContainer extends React.Component {
   render() {
     var menus = [];
     for (var i = 0; i < objects.length; i++) {
-      var menu = e(Menu, { object: objects[i], mode: "view" });
+      if (Object.keys(objects[i].properties).length == 0) {
+        continue;
+      }
+      var menu = e(Menu, { object: objects[i], mode: "view", key: i });
       menus.push(menu);
     }
     return e("div", {}, menus);
@@ -1239,20 +1514,80 @@ function renderDisplayUI(object) {
   // menu = e(Menu, { object: object, mode: "view" });
   // ReactDOM.render(menu, domConatiner);
 }
+document.addEventListener("click", function(e) {
+  var graphWindow = document.getElementById("graph-window");
+  if (graphWindow.style.zIndex == 0) {
+    var rect = graphWindow.getBoundingClientRect();
+    if (e.pageX < rect.x || e.pageX > rect.x + rect.width) {
+      if (e.pageY < rect.y || e.pageY > rect.y + rect.height) {
+        graphWindow.style.zIndex = -1;
+      }
+    }
+  }
+});
 
 document.getElementById("window").addEventListener("click", function(e) {
+  var graphWindow = document.getElementById("graph-window");
+  if (graphWindow.style.zIndex == 0) {
+    var rect = graphWindow.getBoundingClientRect();
+    if (e.pageX < rect.x || e.pageX > rect.x + rect.width) {
+      if (e.pageY < rect.y || e.pageY > rect.y + rect.height) {
+        graphWindow.style.zIndex = -1;
+      }
+    }
+  }
+
   var canvasPoint = translatePointOnCanvas(createVertex(e.pageX, e.pageY));
   for (i = 0; i < objects.length; i++) {
     //Check if pointer was inside an object when clicked.
     if (Matter.Vertices.contains(objects[i].vertices, canvasPoint)) {
-      if (usePhysics) {
-        selectedObject = objects[i];
-        renderDisplayUI(selectedObject);
-      } else {
+      if (!usePhysics && Object.keys(objects[i].properties).length != 0) {
         renderUI(objects[i], i);
         selectedObject = objects[i];
       }
+      console.log("Hello");
+      if (creatingRope) {
+        if (objects[i].vertices.length >= 4) {
+          addToRope(i);
+        }
+      }
+
       break;
     }
   }
 });
+var creatingRope = false;
+var ropeObjects = [];
+var ropePulley = null;
+function createRope() {
+  creatingRope = true;
+  ropeObjects = [];
+  ropePulley = null;
+  console.log("Creating Rope");
+}
+function addToRope(index) {
+  console.log("Adding To Rope");
+  if (objects[index].vertices.length == 4) {
+    if (ropeObjects.length < 2) {
+      console.log("Adding Object");
+      ropeObjects.push(index);
+    }
+  } else {
+    if (ropePulley == null) {
+      console.log("Adding Pulley");
+      ropePulley = index;
+    }
+  }
+  console.log(ropePulley + " " + ropeObjects.length);
+  if (ropePulley != null && ropeObjects.length == 2) {
+    endRope();
+  }
+}
+function endRope() {
+  console.log("Ending Rope");
+  connections.push(
+    createConnection(ropeObjects[0], ropeObjects[1], ropePulley)
+  );
+
+  creatingRope = false;
+}
